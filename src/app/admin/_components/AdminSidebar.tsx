@@ -87,12 +87,13 @@ export default function AdminSidebar({
       >
         <IconEye className="h-5 w-5" /> ดูตัวอย่างฝั่งผู้ใช้
       </Link>
-      <Link
+      {/* Plain <a> so Next.js does NOT prefetch it (prefetch would silently log the user out) */}
+      <a
         href="/api/auth/logout"
         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
       >
         <IconLogout className="h-5 w-5" /> ออกจากระบบ
-      </Link>
+      </a>
     </div>
   );
 

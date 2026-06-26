@@ -67,12 +67,13 @@ export default function Sidebar({
           <IconShield className="h-5 w-5" /> Manage Concerts
         </Link>
       ) : null}
-      <Link
+      {/* Plain <a> so Next.js does NOT prefetch it (prefetch would silently log the user out) */}
+      <a
         href="/api/auth/logout"
         className="mt-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
       >
         <IconLogout className="h-5 w-5" /> Logout
-      </Link>
+      </a>
     </div>
   );
 
