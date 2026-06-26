@@ -1,0 +1,169 @@
+// Ticketify / ผ่อนกับอิ้ง — data model
+//
+// Money is stored in BAHT as Decimal(10,2) — exact to 2 decimal places.
+//
+// Structure: a Concert has many TicketTiers (seat zones), each with its own
+// price + down payment. Each tier has InstallmentPlans (one per plan length,
+// e.g. 4/8/12/16 weeks) holding the weekly amount — the full pricing matrix.
+//
+// Keyed by `lineUserId` (LINE Login) so web + LINE share one user.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  lineUserId  String   @id
+  displayName String?
+  email       String?
+  phone       String?
+  address     String?
+  pictureUrl  String?
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+
+  orders          Order[]
+  concertsCreated Concert[] @relation("ConcertCreatedBy")
+}
+
+model Concert {
+  id          String        @id @default(cuid())
+  name        String
+  artist      String?
+  venue       String?
+  eventDate   DateTime?
+  posterUrl   String?
+  description String?
+  status      ConcertStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation("ConcertCreatedBy", fields: [createdById], references: [lineUserId])
+
+  tiers  TicketTier[] // seat zones / price tiers
+  orders Order[]
+
+  @@index([status])
+  @@index([createdById])
+}
+
+// A seat zone / price tier for a concert (e.g. "VIP" ฿7,900).
+model TicketTier {
+  id         String   @id @default(cuid())
+  concertId  String
+  concert    Concert  @relation(fields: [concertId], references: [id], onDelete: Cascade)
+  name       String // "VIP", "Zone A", ...
+  price      Decimal  @db.Decimal(10, 2) // ราคาบัตร (baht)
+  downAmount Decimal  @db.Decimal(10, 2) // วางดาวน์ (baht) — one down per tier
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  plans  InstallmentPlan[]
+  orders Order[]
+
+  @@index([concertId])
+}
+
+// One cell of the matrix: weekly amount for a tier at a given plan length.
+model InstallmentPlan {
+  id           String   @id @default(cuid())
+  tierId       String
+  tier         TicketTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  weeks        Int // 4, 8, 12, 16 ...
+  weeklyAmount Decimal  @db.Decimal(10, 2) // ผ่อน/สัปดาห์ (baht)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([tierId])
+}
+
+model Order {
+  id         String  @id @default(cuid())
+  lineUserId String
+  user       User    @relation(fields: [lineUserId], references: [lineUserId])
+  concertId  String
+  concert    Concert @relation(fields: [concertId], references: [id])
+
+  // customer info captured at checkout (for admin search / contact)
+  customerName  String?
+  customerPhone String?
+
+  tierId String?
+  tier   TicketTier? @relation(fields: [tierId], references: [id])
+  planId String?
+  plan   InstallmentPlan? @relation(fields: [planId], references: [id])
+
+  // snapshot of the chosen tier + plan at purchase time
+  tierName     String
+  ticketPrice  Decimal @db.Decimal(10, 2) // baht
+  weeks        Int
+  downAmount   Decimal @db.Decimal(10, 2) // baht
+  weeklyAmount Decimal @db.Decimal(10, 2) // baht
+  totalAmount  Decimal @db.Decimal(10, 2) // = down + weekly * weeks (baht)
+
+  status    OrderStatus @default(PENDING) // new orders are set to AWAITING_DOWNPAYMENT in createOrder
+  createdAt DateTime    @default(now())
+
+  installments Installment[]
+
+  @@index([lineUserId])
+  @@index([concertId])
+  @@index([tierId])
+  @@index([planId])
+}
+
+model Installment {
+  id         String            @id @default(cuid())
+  orderId    String
+  order      Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  weekNumber Int
+  dueDate    DateTime
+  amount     Decimal           @db.Decimal(10, 2) // baht
+  status     InstallmentStatus @default(PENDING)
+  paidAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([orderId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ConcertStatus {
+  DRAFT
+  PUBLISHED
+  SOLD_OUT
+  CANCELLED
+}
+
+enum OrderStatus {
+  // booking flow
+  AWAITING_DOWNPAYMENT // รอชำระดาวน์
+  AWAITING_DOCS // รอตรวจเอกสาร
+  TICKET_ISSUED // ออกบัตรแล้ว
+  CANCELLED // ยกเลิก
+  // legacy (kept so old rows stay valid)
+  PENDING
+  CONFIRMED
+  COMPLETED
+}
+
+enum InstallmentStatus {
+  PENDING
+  PAID
+  LATE
+}

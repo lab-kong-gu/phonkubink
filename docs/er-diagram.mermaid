@@ -1,0 +1,68 @@
+erDiagram
+    USER ||--o{ ORDER : "places"
+    USER ||--o{ CONCERT : "admin adds"
+    CONCERT ||--o{ INSTALLMENT_PLAN : "offers"
+    CONCERT ||--o{ ORDER : "is bought in"
+    INSTALLMENT_PLAN ||--o{ ORDER : "chosen in"
+    ORDER ||--o{ INSTALLMENT : "has งวด"
+
+    USER {
+        string  lineUserId  PK "from LINE Login — links web + LINE"
+        string  displayName
+        string  email
+        string  phone
+        string  pictureUrl
+        Role    role        "USER | ADMIN"
+        datetime createdAt
+    }
+
+    CONCERT {
+        string        id          PK "cuid"
+        string        name        "ชื่อคอนเสิร์ต"
+        string        artist
+        string        venue
+        datetime      eventDate
+        decimal       ticketPrice "ราคาบัตร (baht)"
+        string        posterUrl
+        string        description
+        ConcertStatus status      "DRAFT|PUBLISHED|SOLD_OUT|CANCELLED"
+        string        createdById FK "-> USER.lineUserId (the admin)"
+        datetime      createdAt
+        datetime      updatedAt
+    }
+
+    INSTALLMENT_PLAN {
+        string   id           PK "cuid"
+        string   concertId    FK "-> CONCERT.id (cascade delete)"
+        string   label        "ผ่อน 8 อาทิตย์"
+        int      weeks        "จำนวนงวด"
+        decimal  downAmount   "เงินดาวน์ (baht)"
+        decimal  weeklyAmount "ยอดผ่อน/สัปดาห์ (baht)"
+        boolean  isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ORDER {
+        string      id           PK "cuid"
+        string      lineUserId   FK "-> USER.lineUserId"
+        string      concertId    FK "-> CONCERT.id"
+        string      planId       FK "-> INSTALLMENT_PLAN.id"
+        int         weeks        "snapshot ตอนซื้อ"
+        decimal     downAmount   "snapshot (baht)"
+        decimal     weeklyAmount "snapshot (baht)"
+        decimal     totalAmount  "down + weekly*weeks (baht)"
+        OrderStatus status        "PENDING|CONFIRMED|CANCELLED|COMPLETED"
+        datetime    createdAt
+    }
+
+    INSTALLMENT {
+        string            id          PK "cuid"
+        string            orderId     FK "-> ORDER.id (cascade delete)"
+        int               weekNumber  "งวดที่ 1,2,3..."
+        datetime          dueDate     "วันครบกำหนด"
+        decimal           amount      "ยอดงวด (baht)"
+        InstallmentStatus status      "PENDING|PAID|LATE"
+        datetime          paidAt
+        datetime          createdAt
+    }
