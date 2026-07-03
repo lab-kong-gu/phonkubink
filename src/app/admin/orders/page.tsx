@@ -3,9 +3,15 @@ import AdminShell from "../_components/AdminShell";
 import { prisma } from "@/lib/prisma";
 import { baht } from "@/lib/money";
 import { fmtDate } from "@/lib/format";
-import { orderStatusLabel, nextActionLabel, isActive } from "@/lib/orderStatus";
+import {
+  orderStatusLabel,
+  nextActionLabel,
+  isActive,
+  isAwaitingDocsReview,
+  isDocsRejected,
+} from "@/lib/orderStatus";
 import { IconSearch } from "../../_components/icons";
-import { advanceOrder, cancelOrderAdmin } from "./actions";
+import { advanceOrder, cancelOrderAdmin, approveDocsOrder, rejectDocsOrder, resubmitDocsOrder } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -128,10 +134,56 @@ export default async function AdminOrders({
                     <td className="px-4 py-3 text-right font-semibold text-brand-navy">{baht(o.totalAmount)}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${st.cls}`}>{st.label}</span>
+                      {isDocsRejected(o.status) && o.docsRejectionReason ? (
+                        <p className="mt-1 max-w-[220px] text-xs text-rose-500">{o.docsRejectionReason}</p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        {isActive(o.status) && advanceLabel ? (
+                        {isAwaitingDocsReview(o.status) ? (
+                          <>
+                            <form action={approveDocsOrder}>
+                              <input type="hidden" name="id" value={o.id} />
+                              <button className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
+                                เอกสารผ่าน
+                              </button>
+                            </form>
+                            <details className="relative">
+                              <summary className="cursor-pointer list-none rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
+                                เอกสารไม่ผ่าน
+                              </summary>
+                              <form
+                                action={rejectDocsOrder}
+                                className="absolute right-0 z-10 mt-2 w-64 space-y-2 rounded-lg border border-rose-200 bg-white p-3 shadow-lg"
+                              >
+                                <input type="hidden" name="id" value={o.id} />
+                                <label className="block text-xs font-medium text-brand-navy">
+                                  เหตุผล / เอกสารที่ต้องแก้ไข
+                                </label>
+                                <textarea
+                                  name="reason"
+                                  required
+                                  rows={3}
+                                  placeholder="เช่น รูปบัตรประชาชนไม่ชัด กรุณาถ่ายใหม่"
+                                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-rose-400 focus:outline-none"
+                                />
+                                <button
+                                  type="submit"
+                                  className="w-full rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                                >
+                                  ยืนยันเอกสารไม่ผ่าน
+                                </button>
+                              </form>
+                            </details>
+                          </>
+                        ) : isDocsRejected(o.status) ? (
+                          <form action={resubmitDocsOrder}>
+                            <input type="hidden" name="id" value={o.id} />
+                            <button className="rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50">
+                              ลูกค้าส่งเอกสารใหม่แล้ว
+                            </button>
+                          </form>
+                        ) : isActive(o.status) && advanceLabel ? (
                           <form action={advanceOrder}>
                             <input type="hidden" name="id" value={o.id} />
                             <button className="rounded-lg bg-brand-pink px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">

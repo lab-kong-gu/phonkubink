@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import AdminSidebar from "./AdminSidebar";
 
-type AdminNavKey = "overview" | "concerts" | "orders";
+type AdminNavKey = "overview" | "concerts" | "orders" | "slips";
 
 // Wraps every admin page with the light "ADMIN PANEL" sidebar. Also enforces admin access.
 export default async function AdminShell({

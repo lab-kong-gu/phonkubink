@@ -1,5 +1,6 @@
 // Home / landing page. Server Component, so it can read process.env and the session.
 import { getSessionUserId } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,13 @@ const checks = [
   { label: "Database URL", ok: !!process.env.DATABASE_URL },
 ];
 
-export default function Home() {
-  const loggedIn = !!getSessionUserId();
+export default async function Home() {
+  // Only treat as logged-in if the cookie is valid AND the user still exists
+  // (a stale cookie after a DB wipe would otherwise hide the login button).
+  const userId = getSessionUserId();
+  const loggedIn = userId
+    ? !!(await prisma.user.findUnique({ where: { lineUserId: userId } }))
+    : false;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-6 px-6 py-12">

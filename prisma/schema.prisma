@@ -26,10 +26,12 @@ model User {
   address     String?
   pictureUrl  String?
   role        Role     @default(USER)
+  isFriend    Boolean  @default(false) // kept in sync by the LINE webhook (follow/unfollow)
   createdAt   DateTime @default(now())
 
   orders          Order[]
   concertsCreated Concert[] @relation("ConcertCreatedBy")
+  slipSubmissions SlipSubmission[]
 }
 
 model Concert {
@@ -113,8 +115,9 @@ model Order {
   weeklyAmount Decimal @db.Decimal(10, 2) // baht
   totalAmount  Decimal @db.Decimal(10, 2) // = down + weekly * weeks (baht)
 
-  status    OrderStatus @default(PENDING) // new orders are set to AWAITING_DOWNPAYMENT in createOrder
-  createdAt DateTime    @default(now())
+  status               OrderStatus @default(PENDING) // new orders are set to AWAITING_DOWNPAYMENT in createOrder
+  docsRejectionReason  String? // admin-filled reason when status = DOCS_REJECTED (what needs fixing/resubmitting)
+  createdAt            DateTime    @default(now())
 
   installments Installment[]
 
@@ -125,17 +128,85 @@ model Order {
 }
 
 model Installment {
-  id         String            @id @default(cuid())
-  orderId    String
-  order      Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  weekNumber Int
-  dueDate    DateTime
-  amount     Decimal           @db.Decimal(10, 2) // baht
-  status     InstallmentStatus @default(PENDING)
-  paidAt     DateTime?
-  createdAt  DateTime          @default(now())
+  id            String            @id @default(cuid())
+  orderId       String
+  order         Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  weekNumber    Int // 0 = down payment (วางดาวน์), 1+ = weekly งวด
+  isDownPayment Boolean           @default(false)
+  dueDate       DateTime
+  amount        Decimal           @db.Decimal(10, 2) // total baht owed for this line
+  amountPaid    Decimal           @default(0) @db.Decimal(10, 2) // cumulative baht paid so far (supports deposit + remainder)
+  status        InstallmentStatus @default(PENDING)
+  paidAt        DateTime? // set once amountPaid >= amount (fully settled)
+
+  // Payment tracking. As of Phase 4.2 there's no gateway: this holds the
+  // EasySlip transRef of the verified bank-transfer slip (opaque string).
+  // Falls back to a synthetic "manual-{submissionId}" id for admin-confirmed
+  // slips EasySlip couldn't read. (Historically held Omise/Beam charge ids.)
+  gatewayChargeId String? // most recent settled charge/slip ref
+  omiseSourceId   String? // legacy — unused since Phase 4.2 (kept to avoid a destructive migration)
+  reminderSentAt  DateTime? // last time a due-date reminder push was sent
+
+  paymentLogs     PaymentLog[]
+  slipSubmissions SlipSubmission[]
+  createdAt       DateTime         @default(now())
 
   @@index([orderId])
+  @@index([gatewayChargeId])
+}
+
+// One successful gateway charge credited toward an installment. Down payments
+// can be settled in two charges (deposit, then the remainder) — this table
+// is what makes crediting idempotent (unique gatewayChargeId) and lets us sum
+// amountPaid reliably instead of trusting a single mutable counter. Charge ids
+// are unique per gateway already, so mixing Omise (card) and Beam (PromptPay)
+// ids in one column is safe.
+model PaymentLog {
+  id              String      @id @default(cuid())
+  installmentId   String
+  installment     Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  gatewayChargeId String      @unique
+  amount          Decimal     @db.Decimal(10, 2) // baht credited by this charge
+  createdAt       DateTime    @default(now())
+
+  @@index([installmentId])
+}
+
+// A bank-transfer slip photo a customer sent in LINE chat. Payments run
+// entirely by manual PromptPay/bank transfer now (no payment gateway) — the
+// customer transfers, then sends a photo of the slip, which we verify via
+// EasySlip (reads the QR embedded in the slip, checks it against real bank
+// data). If the amount matches what's owed and it isn't a reused slip, we
+// auto-confirm; otherwise it lands here for admin review.
+model SlipSubmission {
+  id            String       @id @default(cuid())
+  lineUserId    String
+  user          User         @relation(fields: [lineUserId], references: [lineUserId])
+  installmentId String? // null when we couldn't confidently match a single open installment
+  installment   Installment? @relation(fields: [installmentId], references: [id])
+
+  lineMessageId String @unique // dedupes LINE webhook redelivery of the same image event
+  imagePath     String? // path in the private "slips" Supabase Storage bucket
+
+  transRef        String? // EasySlip's transaction reference, once successfully parsed
+  amountInSlip    Decimal? @db.Decimal(10, 2)
+  isAmountMatched Boolean?
+  isDuplicate     Boolean? // EasySlip's own duplicate-slip detection
+
+  status     SlipSubmissionStatus @default(PENDING_REVIEW)
+  note       String? // verification error message, or admin's reject reason
+  reviewedAt DateTime?
+  createdAt  DateTime             @default(now())
+
+  @@index([lineUserId])
+  @@index([installmentId])
+}
+
+enum SlipSubmissionStatus {
+  PENDING_REVIEW // needs an admin to pick the installment and/or confirm
+  AUTO_CONFIRMED // amount matched, not a duplicate — credited automatically
+  CONFIRMED // admin manually confirmed and credited it
+  REJECTED // admin rejected — customer needs to resend or contact support
 }
 
 enum Role {
@@ -153,7 +224,9 @@ enum ConcertStatus {
 enum OrderStatus {
   // booking flow
   AWAITING_DOWNPAYMENT // รอชำระดาวน์
-  AWAITING_DOCS // รอตรวจเอกสาร
+  AWAITING_DOCS // รอตรวจเอกสาร (customer paid deposit, waiting for them to submit + admin to review paperwork)
+  DOCS_APPROVED // เอกสารผ่าน (admin approved — ready to issue ticket)
+  DOCS_REJECTED // เอกสารไม่ผ่าน (admin rejected — see docsRejectionReason, customer must resubmit)
   TICKET_ISSUED // ออกบัตรแล้ว
   CANCELLED // ยกเลิก
   // legacy (kept so old rows stay valid)
@@ -164,6 +237,7 @@ enum OrderStatus {
 
 enum InstallmentStatus {
   PENDING
+  PARTIAL // deposit (or other partial amount) paid, balance still owed
   PAID
   LATE
 }

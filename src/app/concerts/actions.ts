@@ -1,12 +1,12 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { pushMessages, buildDepositInvoiceFlex } from "@/lib/linePush";
+import { depositAmountFor } from "@/lib/money";
+import { buildInstallments } from "@/lib/orderBuilder";
 
 // Customer buys a ticket: picks a plan (which belongs to a tier).
 // We snapshot tier + plan terms onto the Order and generate weekly Installments.
@@ -18,36 +18,24 @@ export async function createOrder(formData: FormData) {
 
   const plan = await prisma.installmentPlan.findUnique({
     where: { id: planId },
-    include: { tier: true },
+    include: { tier: { include: { concert: true } } },
   });
   if (!plan || !plan.isActive || plan.tier.concertId !== concertId) {
     redirect(`/concerts/${concertId}`);
   }
 
   const tier = plan.tier;
-  const weekly = new Prisma.Decimal(plan.weeklyAmount);
-  const total = new Prisma.Decimal(tier.downAmount).plus(weekly.times(plan.weeks));
 
   // Billing frequency: weekly (every 7 days, 1 งวด) or biweekly (every 15 days, 2 งวด at once).
   // Total is identical either way — biweekly just regroups the same weekly amounts.
   const biweekly = (formData.get("frequency") ?? "WEEKLY").toString() === "BIWEEKLY";
 
-  const installments = biweekly
-    ? Array.from({ length: Math.ceil(plan.weeks / 2) }, (_, i) => {
-        const weeksThis = Math.min(2, plan.weeks - i * 2); // 2, or 1 for an odd last งวด
-        return {
-          weekNumber: i + 1,
-          dueDate: new Date(Date.now() + (i + 1) * 15 * DAY_MS),
-          amount: weekly.times(weeksThis),
-          status: "PENDING" as const,
-        };
-      })
-    : Array.from({ length: plan.weeks }, (_, i) => ({
-        weekNumber: i + 1,
-        dueDate: new Date(Date.now() + (i + 1) * 7 * DAY_MS),
-        amount: plan.weeklyAmount,
-        status: "PENDING" as const,
-      }));
+  const { installments, total } = buildInstallments({
+    downAmount: tier.downAmount,
+    weeklyAmount: plan.weeklyAmount,
+    weeks: plan.weeks,
+    biweekly,
+  });
 
   const order = await prisma.order.create({
     data: {
@@ -66,8 +54,24 @@ export async function createOrder(formData: FormData) {
       status: "AWAITING_DOWNPAYMENT",
       installments: { create: installments },
     },
+    include: { installments: true },
   });
 
+  const downInst = order.installments.find((i) => i.isDownPayment);
+  if (downInst) {
+    const depositAmount = depositAmountFor(downInst.amount);
+    await pushMessages(user.lineUserId, [
+      buildDepositInvoiceFlex(
+        { id: order.id, tierName: order.tierName, concertName: tier.concert.name, totalAmount: order.totalAmount },
+        depositAmount,
+        downInst.amount
+      ),
+    ]);
+  }
+
   revalidatePath("/tickets");
+
+  // No web pay page anymore — the deposit invoice was pushed over LINE with the
+  // PromptPay details; the customer transfers and sends a slip in chat.
   redirect(`/tickets?new=${order.id}`);
 }
