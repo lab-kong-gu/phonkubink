@@ -18,7 +18,7 @@ import {
 } from "@/lib/linePush";
 import { uploadSlip } from "@/lib/storage";
 import { verifyBankSlipImage } from "@/lib/easyslip";
-import { remainingAmount } from "@/lib/money";
+import { remainingAmount, depositAmountFor } from "@/lib/money";
 import { markInstallmentPaidAndNotify } from "@/lib/paymentConfirm";
 
 interface LineEvent {
@@ -89,13 +89,20 @@ async function handleSlipImage(userId: string, messageId: string) {
         isAmountMatched = null;
         note = "สลิปนี้เคยถูกใช้ยืนยันการชำระเงินแล้ว";
       } else {
-        // Find an open installment whose remaining balance equals the slip
-        // amount. candidates are ordered by dueDate asc, so when several งวด
-        // share the same amount (e.g. equal weekly งวด) we credit the
-        // earliest-due one — the natural "pay off oldest first" behavior.
-        const match = candidates.find(
-          (c) => Math.abs(remainingAmount(c.amount, c.amountPaid) - amountInSlip!) < 0.01
-        );
+        // Find an open installment the slip amount can settle. candidates are
+        // ordered by dueDate asc, so when several งวด share the same amount we
+        // credit the earliest-due one — the natural "pay off oldest first".
+        // A match is either (a) the exact remaining balance, or (b) the fixed
+        // ฿300 booking deposit on a not-yet-touched down payment (a deliberate
+        // partial payment — markInstallmentPaidAndNotify handles PARTIAL).
+        const paid = amountInSlip!;
+        const match = candidates.find((c) => {
+          if (Math.abs(remainingAmount(c.amount, c.amountPaid) - paid) < 0.01) return true;
+          if (c.isDownPayment && parseFloat(String(c.amountPaid)) <= 0) {
+            return Math.abs(depositAmountFor(c.amount) - paid) < 0.01;
+          }
+          return false;
+        });
         if (match) {
           installmentId = match.id;
           isAmountMatched = true;

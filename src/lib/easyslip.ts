@@ -8,12 +8,6 @@
 
 const API_BASE = "https://api.easyslip.com/v2";
 
-function authHeader(): string {
-  const key = process.env.EASYSLIP_API_KEY;
-  if (!key) throw new Error("EASYSLIP_API_KEY is not set");
-  return `Bearer ${key}`;
-}
-
 export interface EasySlipBank {
   id: string;
   name: string;
@@ -49,16 +43,29 @@ export async function verifyBankSlipImage(
   contentType: string,
   opts: { matchAmount?: number; checkDuplicate?: boolean } = {}
 ): Promise<EasySlipResult> {
+  // Never throw — a missing key or a network failure should route the slip to
+  // the admin review queue (and still acknowledge the customer), not crash the
+  // whole webhook handler before it can reply.
+  const key = process.env.EASYSLIP_API_KEY;
+  if (!key) {
+    return { ok: false, code: "NO_API_KEY", message: "EASYSLIP_API_KEY is not set" };
+  }
+
   const formData = new FormData();
   formData.append("image", new Blob([new Uint8Array(imageBuffer)], { type: contentType || "image/jpeg" }), "slip.jpg");
   if (opts.matchAmount !== undefined) formData.append("matchAmount", String(opts.matchAmount));
   if (opts.checkDuplicate !== undefined) formData.append("checkDuplicate", String(opts.checkDuplicate));
 
-  const res = await fetch(`${API_BASE}/verify/bank`, {
-    method: "POST",
-    headers: { Authorization: authHeader() },
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/verify/bank`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}` },
+      body: formData,
+    });
+  } catch (e) {
+    return { ok: false, code: "NETWORK_ERROR", message: `EasySlip request failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
 
   const body = await res.json().catch(() => null);
   if (!body) {
