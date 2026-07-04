@@ -43,12 +43,7 @@ async function handleSlipImage(userId: string, messageId: string) {
   const existing = await prisma.slipSubmission.findUnique({ where: { lineMessageId: messageId } });
   if (existing) return;
 
-  // Only customers we already know about (i.e. who've made at least one
-  // order) can submit slips — a stranger just messaging the OA with a random
-  // photo shouldn't create a database row.
-  const user = await prisma.user.findUnique({ where: { lineUserId: userId } });
-  if (!user) return;
-
+  // The caller has already confirmed this sender is a linked customer.
   const content = await downloadLineContent(messageId);
   if (!content) return; // couldn't fetch the image at all — nothing to record
 
@@ -163,10 +158,17 @@ export async function POST(req: NextRequest) {
         await prisma.user.updateMany({ where: { lineUserId: userId }, data: { isFriend: true } });
       } else if (event.type === "unfollow") {
         await prisma.user.updateMany({ where: { lineUserId: userId }, data: { isFriend: false } });
-      } else if (event.type === "message" && event.message?.type === "image" && event.message.id) {
-        await handleSlipImage(userId, event.message.id);
+      } else if (event.type === "message") {
+        // Only respond to senders whose LINE account is linked to a customer
+        // record (created when they log in via LINE). Unknown senders get no
+        // reply at all — and normal text messages get no auto-reply either;
+        // a human handles chat manually.
+        const user = await prisma.user.findUnique({ where: { lineUserId: userId } });
+        if (!user) continue;
+        if (event.message?.type === "image" && event.message.id) {
+          await handleSlipImage(userId, event.message.id);
+        }
       }
-      // Normal text messages get no auto-reply — a human handles chat manually.
     } catch (err) {
       // Don't let one bad event fail the whole batch's 200 response.
       console.error("LINE webhook event error:", err);
