@@ -73,13 +73,13 @@ async function handleSlipImage(userId: string, messageId: string) {
 
   if (candidates.length === 0) {
     note = "ไม่พบรายการค้างชำระของลูกค้ารายนี้";
-  } else if (candidates.length > 1) {
-    note = `พบรายการค้างชำระหลายรายการ (${candidates.length} รายการ) ต้องเลือกด้วยตนเอง`;
   } else {
-    const candidate = candidates[0];
-    const amountDue = remainingAmount(candidate.amount, candidate.amountPaid);
+    // Verify the slip once to read the actual transferred amount and dedupe.
+    // We do our OWN amount matching below (against each open installment's
+    // remaining balance) instead of relying on EasySlip's matchAmount, because
+    // there's usually more than one open งวด and we don't know up front which
+    // one the customer paid — the slip amount tells us.
     const result = await verifyBankSlipImage(content.buffer, content.contentType, {
-      matchAmount: amountDue,
       checkDuplicate: true,
     });
 
@@ -89,16 +89,30 @@ async function handleSlipImage(userId: string, messageId: string) {
       const d = result.data;
       transRef = d.rawSlip.transRef;
       amountInSlip = d.amountInSlip;
-      isAmountMatched = d.isAmountMatched ?? null;
       isDuplicate = d.isDuplicate;
-      installmentId = candidate.id;
 
-      if (d.isAmountMatched && !d.isDuplicate) {
-        status = "AUTO_CONFIRMED";
+      if (d.isDuplicate) {
+        isAmountMatched = null;
+        note = "สลิปนี้เคยถูกใช้ยืนยันการชำระเงินแล้ว";
       } else {
-        note = d.isDuplicate
-          ? "สลิปนี้เคยถูกใช้ยืนยันการชำระเงินแล้ว"
-          : `ยอดเงินในสลิป (${d.amountInSlip}) ไม่ตรงกับยอดที่ต้องชำระ (${amountDue})`;
+        // Find an open installment whose remaining balance equals the slip
+        // amount. candidates are ordered by dueDate asc, so when several งวด
+        // share the same amount (e.g. equal weekly งวด) we credit the
+        // earliest-due one — the natural "pay off oldest first" behavior.
+        const match = candidates.find(
+          (c) => Math.abs(remainingAmount(c.amount, c.amountPaid) - amountInSlip!) < 0.01
+        );
+        if (match) {
+          installmentId = match.id;
+          isAmountMatched = true;
+          status = "AUTO_CONFIRMED";
+        } else {
+          // Amount doesn't match any single งวด (partial payment, paying several
+          // งวด at once, over/underpaid, etc.) — can't safely auto-credit, so
+          // send it to the admin queue where the installment can be picked by hand.
+          isAmountMatched = false;
+          note = `ยอดเงินในสลิป (${amountInSlip}) ไม่ตรงกับยอดคงเหลือของงวดใด (มี ${candidates.length} รายการค้างชำระ)`;
+        }
       }
     }
   }
