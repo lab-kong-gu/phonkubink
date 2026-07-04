@@ -135,7 +135,7 @@ async function handleSlipImage(userId: string, messageId: string) {
   });
 
   if (status !== "AUTO_CONFIRMED") {
-    await pushMessages(userId, [buildSlipPendingReviewMessage()]);
+    await pushMessages(userId, [buildSlipPendingReviewMessage(amountInSlip)]);
   }
 }
 

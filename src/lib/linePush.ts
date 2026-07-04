@@ -324,12 +324,14 @@ export function buildDocsRejectedFlex(order: PushOrderInfo, reason: string): Lin
 
 // Slip photo received, but couldn't be auto-confirmed (amount mismatch,
 // unreadable QR, ambiguous which installment it's for, etc.) — tells the
-// customer we got it and a human will follow up, instead of leaving them
+// customer we got it, confirms the amount we read from the slip (when
+// available), and says a human will follow up, instead of leaving them
 // wondering whether the transfer went through.
-export function buildSlipPendingReviewMessage(): LineMessage {
+export function buildSlipPendingReviewMessage(amountInSlip?: number | null): LineMessage {
+  const amountLine = amountInSlip != null ? `ยอดในสลิป ${baht(amountInSlip)}\n` : "";
   return {
     type: "text",
-    text: "ได้รับสลิปแล้วค่ะ กำลังตรวจสอบยอดเงิน ทีมงานจะแจ้งผลให้ทราบอีกครั้งค่ะ 🙏",
+    text: `ได้รับสลิปแล้วค่ะ 🙏\n${amountLine}กำลังตรวจสอบยอดเงิน ทีมงานจะแจ้งผลให้ทราบอีกครั้งค่ะ`,
   };
 }
 
