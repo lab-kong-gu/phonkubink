@@ -12,7 +12,6 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  replyMessages,
   pushMessages,
   downloadLineContent,
   buildSlipPendingReviewMessage,
@@ -166,14 +165,8 @@ export async function POST(req: NextRequest) {
         await prisma.user.updateMany({ where: { lineUserId: userId }, data: { isFriend: false } });
       } else if (event.type === "message" && event.message?.type === "image" && event.message.id) {
         await handleSlipImage(userId, event.message.id);
-      } else if (event.type === "message" && event.message?.type === "text" && event.replyToken) {
-        await replyMessages(event.replyToken, [
-          {
-            type: "text",
-            text: "ขอบคุณสำหรับข้อความค่ะ 🙏 ทีมงานผ่อนกับอิ้งจะติดต่อกลับโดยเร็วที่สุด\nดูสถานะบัตร/งวดผ่อนของคุณได้ที่เว็บไซต์เลยนะคะ",
-          },
-        ]);
       }
+      // Normal text messages get no auto-reply — a human handles chat manually.
     } catch (err) {
       // Don't let one bad event fail the whole batch's 200 response.
       console.error("LINE webhook event error:", err);
