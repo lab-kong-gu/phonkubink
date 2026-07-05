@@ -342,6 +342,18 @@ export function buildSlipPendingReviewMessage(amountInSlip?: number | null): Lin
   });
 }
 
+// Slip is a duplicate of one already used to confirm a payment — reassure the
+// customer that the transfer was already received (no action needed), rather
+// than making it look like something's wrong.
+export function buildSlipDuplicateMessage(): LineMessage {
+  return bubble({
+    header: "สลิปซ้ำ · ผ่อนกับอิ้ง",
+    headerColor: "#0D9488",
+    title: "สลิปซ้ำ ทางร้านรับยอดโอนแล้วครับลูกค้า",
+    rows: [{ label: "สถานะ", value: "รับยอดโอนแล้ว ✅" }],
+  });
+}
+
 // Admin rejected a slip submission (couldn't verify it / amount didn't
 // match / etc.) — reason is whatever the admin typed, or a generic fallback.
 export function buildSlipRejectedMessage(reason?: string): LineMessage {

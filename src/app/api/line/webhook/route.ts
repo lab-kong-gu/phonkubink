@@ -15,6 +15,7 @@ import {
   pushMessages,
   downloadLineContent,
   buildSlipPendingReviewMessage,
+  buildSlipDuplicateMessage,
 } from "@/lib/linePush";
 import { uploadSlip } from "@/lib/storage";
 import { verifyBankSlipImage } from "@/lib/easyslip";
@@ -142,7 +143,9 @@ async function handleSlipImage(userId: string, messageId: string) {
   });
 
   if (status !== "AUTO_CONFIRMED") {
-    await pushMessages(userId, [buildSlipPendingReviewMessage(amountInSlip)]);
+    await pushMessages(userId, [
+      isDuplicate ? buildSlipDuplicateMessage() : buildSlipPendingReviewMessage(amountInSlip),
+    ]);
   }
 }
 
