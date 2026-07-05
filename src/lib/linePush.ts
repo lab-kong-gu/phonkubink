@@ -323,16 +323,23 @@ export function buildDocsRejectedFlex(order: PushOrderInfo, reason: string): Lin
 }
 
 // Slip photo received, but couldn't be auto-confirmed (amount mismatch,
-// unreadable QR, ambiguous which installment it's for, etc.) — tells the
-// customer we got it, confirms the amount we read from the slip (when
-// available), and says a human will follow up, instead of leaving them
-// wondering whether the transfer went through.
+// unreadable QR, duplicate, ambiguous which installment it's for, etc.) —
+// a styled bubble (amber "under review" header, same look as the receipt)
+// that confirms the amount we read (when available) and says a human will
+// follow up, so the customer never wonders whether the transfer went through.
 export function buildSlipPendingReviewMessage(amountInSlip?: number | null): LineMessage {
-  const amountLine = amountInSlip != null ? `ยอดในสลิป ${baht(amountInSlip)}\n` : "";
-  return {
-    type: "text",
-    text: `ได้รับสลิปแล้วค่ะ 🙏\n${amountLine}กำลังตรวจสอบยอดเงิน ทีมงานจะแจ้งผลให้ทราบอีกครั้งค่ะ`,
-  };
+  const rows: { label: string; value: string }[] = [];
+  if (amountInSlip != null) {
+    rows.push({ label: "ยอดในสลิป", value: baht(amountInSlip) });
+  }
+  rows.push({ label: "สถานะ", value: "กำลังตรวจสอบ" });
+  return bubble({
+    header: "ได้รับสลิปแล้ว · ผ่อนกับอิ้ง",
+    headerColor: "#D97706",
+    title: "ได้รับสลิปของคุณแล้ว 🙏",
+    rows,
+    footerNote: "ทีมงานกำลังตรวจสอบยอดเงิน และจะแจ้งผลให้ทราบอีกครั้งค่ะ",
+  });
 }
 
 // Admin rejected a slip submission (couldn't verify it / amount didn't
