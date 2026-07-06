@@ -71,7 +71,7 @@ export async function createOrder(formData: FormData) {
 
   revalidatePath("/tickets");
 
-  // No web pay page anymore — the deposit invoice was pushed over LINE with the
-  // PromptPay details; the customer transfers and sends a slip in chat.
-  redirect(`/tickets?new=${order.id}`);
+  // Booking placed; the deposit invoice was already pushed over LINE. Land the
+  // customer on a "จองคิวสำเร็จ" confirmation page with a link to the dashboard.
+  redirect("/booking-success");
 }
