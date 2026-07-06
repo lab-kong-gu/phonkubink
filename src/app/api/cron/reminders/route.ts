@@ -31,6 +31,13 @@ export async function GET(req: NextRequest) {
       reminderSentAt: null,
       dueDate: { gte: windowStart, lte: windowEnd },
       order: { status: { notIn: ["CANCELLED"] } },
+      // The weekly installment plan only starts once the ticket is issued, so
+      // don't remind about งวด before then — only the down payment (which is
+      // due upfront) can be reminded on a not-yet-issued order.
+      OR: [
+        { isDownPayment: true },
+        { order: { status: { in: ["TICKET_ISSUED", "COMPLETED"] } } },
+      ],
     },
     include: { order: { include: { concert: true } } },
   });

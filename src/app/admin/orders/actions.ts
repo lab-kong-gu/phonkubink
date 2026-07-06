@@ -15,13 +15,42 @@ import {
 export async function advanceOrder(formData: FormData) {
   await requireAdmin();
   const id = (formData.get("id") ?? "").toString();
-  const order = await prisma.order.findUnique({ where: { id }, include: { concert: true } });
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { concert: true, installments: true },
+  });
   if (!order) return;
   const next = nextStatus(order.status);
   if (!next) return;
   await prisma.order.update({ where: { id }, data: { status: next as never } });
 
   if (next === "TICKET_ISSUED") {
+    // The weekly installment plan only starts once the customer actually has
+    // the ticket. The งวด were created at booking time with placeholder due
+    // dates; re-anchor them to the issue date now — preserving the original
+    // 7- or 15-day spacing (read from the first two rows) — and clear any
+    // reminder flags so reminders fire relative to the new schedule.
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const weekly = order.installments
+      .filter((i) => !i.isDownPayment)
+      .sort((a, b) => a.weekNumber - b.weekNumber);
+    const intervalDays =
+      weekly.length >= 2
+        ? Math.max(1, Math.round((weekly[1].dueDate.getTime() - weekly[0].dueDate.getTime()) / DAY_MS))
+        : 7;
+    const anchor = Date.now();
+    await Promise.all(
+      weekly.map((inst, idx) =>
+        prisma.installment.update({
+          where: { id: inst.id },
+          data: {
+            dueDate: new Date(anchor + (idx + 1) * intervalDays * DAY_MS),
+            reminderSentAt: null,
+          },
+        })
+      )
+    );
+
     await pushMessages(order.lineUserId, [
       buildTicketIssuedFlex({
         id: order.id,
@@ -34,6 +63,7 @@ export async function advanceOrder(formData: FormData) {
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
+  revalidatePath("/tickets");
 }
 
 export async function cancelOrderAdmin(formData: FormData) {

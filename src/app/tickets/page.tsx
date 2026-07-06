@@ -6,7 +6,7 @@ import { baht, remainingAmount } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { IconPin, IconCalendar, IconX, IconEdit } from "../_components/icons";
 import { cancelOrder, updateOrderPlan } from "./actions";
-import { orderStatusLabel } from "@/lib/orderStatus";
+import { orderStatusLabel, isIssued } from "@/lib/orderStatus";
 
 export const dynamic = "force-dynamic";
 
@@ -201,7 +201,11 @@ export default async function Tickets() {
                             <td className="py-1.5 text-slate-500">
                               {it.isDownPayment ? "เงินดาวน์" : `งวด ${it.weekNumber}`}
                             </td>
-                            <td className="py-1.5 text-slate-500">{fmtDate(it.dueDate)}</td>
+                            <td className="py-1.5 text-slate-500">
+                              {!it.isDownPayment && !isIssued(o.status)
+                                ? "หลังออกบัตร"
+                                : fmtDate(it.dueDate)}
+                            </td>
                             <td className="py-1.5 text-right text-brand-navy">{baht(it.amount)}</td>
                             <td className="py-1.5 text-right text-slate-400">
                               {it.status === "PAID" ? (
