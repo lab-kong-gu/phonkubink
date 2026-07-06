@@ -1,4 +1,5 @@
 // Home / login landing. Server Component, so it can read the session.
+import { redirect } from "next/navigation";
 import { getSessionUserId } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { IconCalendar, IconBell, IconShield } from "./_components/icons";
@@ -6,11 +7,12 @@ import { IconCalendar, IconBell, IconShield } from "./_components/icons";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // Only treat as logged-in if the cookie is valid AND the user still exists.
+  // Already logged in (valid cookie AND the user still exists) → go straight to
+  // the dashboard; the landing below is only for logged-out visitors.
   const userId = getSessionUserId();
-  const loggedIn = userId
-    ? !!(await prisma.user.findUnique({ where: { lineUserId: userId } }))
-    : false;
+  if (userId && (await prisma.user.findUnique({ where: { lineUserId: userId } }))) {
+    redirect("/dashboard");
+  }
 
   return (
     <main className="min-h-screen bg-[#FFF6F0]">
@@ -46,21 +48,12 @@ export default async function Home() {
         </div>
 
         <div className="mt-auto pt-6">
-          {loggedIn ? (
-            <a
-              href="/dashboard"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-pink px-6 py-4 text-[15px] font-semibold text-white hover:opacity-90"
-            >
-              ไปที่แดชบอร์ด →
-            </a>
-          ) : (
-            <a
-              href="/api/auth/line/login"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#06C755] px-6 py-4 text-[15px] font-semibold text-white hover:opacity-90"
-            >
-              เข้าสู่ระบบด้วย LINE
-            </a>
-          )}
+          <a
+            href="/api/auth/line/login"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#06C755] px-6 py-4 text-[15px] font-semibold text-white hover:opacity-90"
+          >
+            เข้าสู่ระบบด้วย LINE
+          </a>
           <p className="mt-3 text-center text-[11.5px] text-[#A99F99]">
             เข้าสู่ระบบเพื่อเริ่มจองบัตรและผ่อนชำระ
           </p>
