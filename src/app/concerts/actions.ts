@@ -70,8 +70,7 @@ export async function createOrder(formData: FormData) {
   }
 
   revalidatePath("/tickets");
-
-  // Booking placed; the deposit invoice was already pushed over LINE. Return to
-  // the concert page with ?booked=1 so a "จองคิวสำเร็จ" card pops up in place.
-  redirect(`/concerts/${concertId}?booked=1`);
+  // No redirect — BookingForm (client) already popped the "จองคิวสำเร็จ" card up
+  // the instant the button was pressed. This action just persists the order and
+  // pushes the LINE invoice in the background.
 }
