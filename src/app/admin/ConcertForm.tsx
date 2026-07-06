@@ -88,6 +88,31 @@ export default function ConcertForm({
         />
       </div>
 
+      {concert ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>วิธีการกดบัตร (บรรทัดละ 1 ตัวเลือก)</label>
+            <textarea
+              name="ticketMethods"
+              rows={3}
+              defaultValue={concert.ticketMethods.join("\n")}
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-slate-400">ลูกค้าเลือกได้ 1 ข้อ</p>
+          </div>
+          <div>
+            <label className={labelCls}>วิธีการชำระเงิน (บรรทัดละ 1 ตัวเลือก)</label>
+            <textarea
+              name="paymentMethods"
+              rows={3}
+              defaultValue={concert.paymentMethods.join("\n")}
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-slate-400">ลูกค้าเลือกได้หลายข้อ</p>
+          </div>
+        </div>
+      ) : null}
+
       <button
         type="submit"
         className="rounded-lg bg-brand-pink px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"

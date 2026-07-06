@@ -11,11 +11,15 @@ type TierOpt = { id: string; name: string; price: string; downAmount: string; pl
 export default function BookingForm({
   concertId,
   tiers,
+  ticketMethods,
+  paymentMethods,
   defaultName,
   defaultPhone,
 }: {
   concertId: string;
   tiers: TierOpt[];
+  ticketMethods: string[];
+  paymentMethods: string[];
   defaultName: string;
   defaultPhone: string;
 }) {
@@ -93,6 +97,40 @@ export default function BookingForm({
             </label>
           </div>
         </div>
+
+        {ticketMethods.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-brand-navy">วิธีการกดบัตร *</label>
+            <div className="space-y-2">
+              {ticketMethods.map((m, i) => (
+                <label
+                  key={m}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <input type="radio" name="ticketMethod" value={m} required defaultChecked={i === 0} className="accent-pink-500" />
+                  {m}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {paymentMethods.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-brand-navy">วิธีการชำระเงิน * (เลือกได้หลายข้อ)</label>
+            <div className="space-y-2">
+              {paymentMethods.map((m) => (
+                <label
+                  key={m}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <input type="checkbox" name="paymentMethods" value={m} className="accent-pink-500" />
+                  {m}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"

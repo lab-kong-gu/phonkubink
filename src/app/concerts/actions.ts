@@ -43,6 +43,8 @@ export async function createOrder(formData: FormData) {
       concertId,
       customerName: (formData.get("fullName") ?? "").toString().trim() || null,
       customerPhone: (formData.get("phone") ?? "").toString().trim() || null,
+      ticketMethod: (formData.get("ticketMethod") ?? "").toString().trim() || null,
+      paymentMethods: formData.getAll("paymentMethods").map((v) => v.toString()),
       tierId: tier.id,
       planId: plan.id,
       tierName: tier.name,

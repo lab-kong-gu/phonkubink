@@ -132,6 +132,8 @@ export default async function ConcertDetail({ params }: { params: { id: string }
             concertId={concert.id}
             defaultName={user.displayName ?? ""}
             defaultPhone={user.phone ?? ""}
+            ticketMethods={concert.ticketMethods}
+            paymentMethods={concert.paymentMethods}
             tiers={concert.tiers.map((t) => ({
               id: t.id,
               name: t.name,

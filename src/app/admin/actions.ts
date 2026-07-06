@@ -22,6 +22,14 @@ function money(v: FormDataEntryValue | null): string {
 function int(v: FormDataEntryValue | null): number {
   return parseInt((v ?? "0").toString(), 10) || 0;
 }
+// Split a textarea (one option per line) into a trimmed, de-blanked list.
+function lines(v: FormDataEntryValue | null): string[] {
+  return (v ?? "")
+    .toString()
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 function concertFields(formData: FormData) {
   return {
@@ -59,7 +67,12 @@ export async function updateConcert(formData: FormData) {
   await prisma.concert.update({
     where: { id },
     // Only overwrite the poster if a new file was uploaded; otherwise keep the old one.
-    data: { ...concertFields(formData), ...(posterUrl ? { posterUrl } : {}) },
+    data: {
+      ...concertFields(formData),
+      ...(posterUrl ? { posterUrl } : {}),
+      ticketMethods: lines(formData.get("ticketMethods")),
+      paymentMethods: lines(formData.get("paymentMethods")),
+    },
   });
   revalidatePath("/admin");
   revalidatePath(`/admin/concerts/${id}`);

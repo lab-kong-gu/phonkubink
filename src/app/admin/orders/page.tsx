@@ -129,6 +129,12 @@ export default async function AdminOrders({
                     <td className="px-4 py-3 text-slate-600">
                       {o.concert.name}
                       <span className="text-slate-400"> · {o.tierName}</span>
+                      {o.ticketMethod ? (
+                        <p className="mt-1 text-xs text-slate-400">กดบัตร: {o.ticketMethod}</p>
+                      ) : null}
+                      {o.paymentMethods.length > 0 ? (
+                        <p className="text-xs text-slate-400">ชำระ: {o.paymentMethods.join(", ")}</p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3 text-slate-500">{fmtDate(o.createdAt)}</td>
                     <td className="px-4 py-3 text-right font-semibold text-brand-navy">{baht(o.totalAmount)}</td>
