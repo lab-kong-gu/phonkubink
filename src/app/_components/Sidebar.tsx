@@ -38,9 +38,10 @@ export default function Sidebar({
   const [open, setOpen] = useState(false);
 
   const Brand = (
-    <div className="flex items-center gap-2 px-6 py-5">
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-pink text-white">🎟️</span>
-      <span className="text-lg font-extrabold tracking-tight text-white">TICKETIFY</span>
+    <div className="flex items-center gap-2.5 px-6 py-5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.svg" alt="" className="h-10 w-10 rounded-full" />
+      <span className="text-base font-extrabold tracking-tight text-white">ผ่อนบัตรร้านอิ๊งค์</span>
     </div>
   );
 
@@ -105,8 +106,9 @@ export default function Sidebar({
       {/* Mobile top bar */}
       <div className="sticky top-0 z-30 flex items-center justify-between bg-[#15213C] px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-pink text-white">🎟️</span>
-          <span className="font-extrabold text-white">TICKETIFY</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full" />
+          <span className="font-extrabold text-white">ผ่อนบัตรร้านอิ๊งค์</span>
         </div>
         <button onClick={() => setOpen(true)} aria-label="Open menu" className="text-white">
           <IconMenu className="h-6 w-6" />

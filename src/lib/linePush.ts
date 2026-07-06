@@ -192,7 +192,7 @@ export function buildDepositInvoiceFlex(
   downPaymentTotal: unknown
 ): LineMessage {
   return bubble({
-    header: "ใบแจ้งชำระมัดจำ · ผ่อนกับอิ้ง",
+    header: "ใบแจ้งชำระมัดจำ · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: BRAND_NAVY,
     title: `จองบัตร ${order.concertName} สำเร็จ 🎫`,
     rows: [
@@ -227,7 +227,7 @@ export function buildPlanUpdatedFlex(
     rows.push({ label: "สถานะดาวน์", value: "ครบแล้ว ✅ ไม่ต้องชำระเพิ่ม" });
   }
   return bubble({
-    header: "อัปเดตแผนผ่อน · ผ่อนกับอิ้ง",
+    header: "อัปเดตแผนผ่อน · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: BRAND_NAVY,
     title: `เปลี่ยนแผนผ่อนสำหรับ ${order.concertName}`,
     rows,
@@ -280,7 +280,7 @@ export function buildReceiptFlex(
   }
 
   return bubble({
-    header: "ใบเสร็จรับเงิน · ผ่อนกับอิ้ง",
+    header: "ใบเสร็จรับเงิน · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#16A34A",
     title: `ได้รับชำระเงินแล้ว — ${order.concertName}`,
     rows,
@@ -296,7 +296,7 @@ export function buildSendDocsMessage(): LineMessage {
 // Admin approved the submitted documents — next step is ticket issuance.
 export function buildDocsApprovedFlex(order: PushOrderInfo): LineMessage {
   return bubble({
-    header: "ตรวจเอกสารแล้ว · ผ่อนกับอิ้ง",
+    header: "ตรวจเอกสารแล้ว · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#0D9488",
     title: `เอกสารผ่าน — ${order.concertName} ✅`,
     rows: [
@@ -311,7 +311,7 @@ export function buildDocsApprovedFlex(order: PushOrderInfo): LineMessage {
 // explaining what's missing/needs correcting.
 export function buildDocsRejectedFlex(order: PushOrderInfo, reason: string): LineMessage {
   return bubble({
-    header: "ตรวจเอกสารแล้ว · ผ่อนกับอิ้ง",
+    header: "ตรวจเอกสารแล้ว · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#E11D48",
     title: `เอกสารไม่ผ่าน — ${order.concertName}`,
     rows: [
@@ -334,7 +334,7 @@ export function buildSlipPendingReviewMessage(amountInSlip?: number | null): Lin
   }
   rows.push({ label: "สถานะ", value: "กำลังตรวจสอบ" });
   return bubble({
-    header: "ได้รับสลิปแล้ว · ผ่อนกับอิ้ง",
+    header: "ได้รับสลิปแล้ว · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#D97706",
     title: "ได้รับสลิปของคุณแล้ว 🙏",
     rows,
@@ -347,7 +347,7 @@ export function buildSlipPendingReviewMessage(amountInSlip?: number | null): Lin
 // than making it look like something's wrong.
 export function buildSlipDuplicateMessage(): LineMessage {
   return bubble({
-    header: "สลิปซ้ำ · ผ่อนกับอิ้ง",
+    header: "สลิปซ้ำ · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#0D9488",
     title: "สลิปซ้ำ ทางร้านรับยอดโอนแล้วครับลูกค้า",
     rows: [{ label: "สถานะ", value: "รับยอดโอนแล้ว ✅" }],

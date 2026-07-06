@@ -23,11 +23,15 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-6 px-6 py-12">
-      <div>
-        <h1 className="text-3xl font-bold text-brand-navy">
-          Ticketify · <span className="text-brand-pink">ผ่อนกับอิ้ง</span>
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">ซื้อบัตรคอนเสิร์ตแบบผ่อนชำระ ผ่าน LINE</p>
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.svg" alt="ผ่อนบัตรร้านอิ๊งค์" className="h-16 w-16 rounded-full" />
+        <div>
+          <h1 className="text-2xl font-bold text-brand-navy">
+            ผ่อนบัตร<span className="text-brand-pink">ร้านอิ๊งค์</span>
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">ซื้อบัตรคอนเสิร์ตแบบผ่อนชำระ ผ่าน LINE</p>
+        </div>
       </div>
 
       {loggedIn ? (

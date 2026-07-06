@@ -34,10 +34,11 @@ export default function AdminSidebar({
   const [open, setOpen] = useState(false);
 
   const Brand = (
-    <div className="flex items-center gap-2 px-6 py-5">
-      <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-pink text-white">🎟️</span>
+    <div className="flex items-center gap-2.5 px-6 py-5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.svg" alt="" className="h-10 w-10 rounded-full" />
       <div className="leading-tight">
-        <p className="text-base font-extrabold tracking-tight text-brand-navy">TICKETIFY</p>
+        <p className="text-base font-extrabold tracking-tight text-brand-navy">ผ่อนบัตรร้านอิ๊งค์</p>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Admin Panel</p>
       </div>
     </div>
@@ -104,8 +105,9 @@ export default function AdminSidebar({
       {/* Mobile top bar */}
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-pink text-white">🎟️</span>
-          <span className="font-extrabold text-brand-navy">TICKETIFY</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full" />
+          <span className="font-extrabold text-brand-navy">ผ่อนบัตรร้านอิ๊งค์</span>
         </div>
         <button onClick={() => setOpen(true)} aria-label="Open menu" className="text-brand-navy">
           <IconMenu className="h-6 w-6" />

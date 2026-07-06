@@ -1,0 +1,12 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ผ่อนบัตรร้านอิ๊งค์">
+  <circle cx="100" cy="100" r="96" fill="#FFFFFF" stroke="#1E2A4A" stroke-width="7"/>
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#1E2A4A" stroke-width="2"/>
+  <g transform="rotate(-14 100 66)">
+    <rect x="74" y="52" width="52" height="30" rx="7" fill="#EC4899"/>
+    <line x1="100" y1="53" x2="100" y2="81" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="3 3"/>
+    <circle cx="74" cy="67" r="4.5" fill="#FFFFFF"/>
+    <circle cx="126" cy="67" r="4.5" fill="#FFFFFF"/>
+  </g>
+  <text x="100" y="127" text-anchor="middle" font-family="'Noto Sans Thai', 'Anthropic Sans', sans-serif" font-size="37" font-weight="700" fill="#1E2A4A">ผ่อนบัตร</text>
+  <text x="100" y="155" text-anchor="middle" font-family="'Noto Sans Thai', 'Anthropic Sans', sans-serif" font-size="21" font-weight="500" fill="#1E2A4A">ร้านอิ๊งค์</text>
+</svg>

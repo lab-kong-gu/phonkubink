@@ -13,7 +13,7 @@ export default function AddFriend() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-6 px-6 py-12 text-center">
       <h1 className="text-2xl font-bold text-brand-navy">
-        เพิ่มเพื่อน <span className="text-brand-pink">ผ่อนกับอิ้ง</span> ก่อนนะ
+        เพิ่มเพื่อน <span className="text-brand-pink">ผ่อนบัตรร้านอิ๊งค์</span> ก่อนนะ
       </h1>
       <p className="text-sm text-slate-500">
         ก่อนใช้งาน กรุณาเพิ่ม LINE Official Account ของเราเป็นเพื่อน เพื่อรับใบแจ้งหนี้และแจ้งเตือนการผ่อนชำระ
