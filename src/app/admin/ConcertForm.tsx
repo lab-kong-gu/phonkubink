@@ -101,14 +101,14 @@ export default function ConcertForm({
             <p className="mt-1 text-xs text-slate-400">ลูกค้าเลือกได้ 1 ข้อ</p>
           </div>
           <div>
-            <label className={labelCls}>วิธีการชำระเงิน (บรรทัดละ 1 ตัวเลือก)</label>
+            <label className={labelCls}>วิธีชำระค่าบัตร (บรรทัดละ 1 ตัวเลือก)</label>
             <textarea
               name="paymentMethods"
               rows={3}
               defaultValue={concert.paymentMethods.join("\n")}
               className={inputCls}
             />
-            <p className="mt-1 text-xs text-slate-400">ลูกค้าเลือกได้หลายข้อ</p>
+            <p className="mt-1 text-xs text-slate-400">ลูกค้าเลือกได้ 1 ข้อ</p>
           </div>
         </div>
       ) : null}

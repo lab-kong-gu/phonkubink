@@ -44,7 +44,7 @@ export async function createOrder(formData: FormData) {
       customerName: (formData.get("fullName") ?? "").toString().trim() || null,
       customerPhone: (formData.get("phone") ?? "").toString().trim() || null,
       ticketMethod: (formData.get("ticketMethod") ?? "").toString().trim() || null,
-      paymentMethods: formData.getAll("paymentMethods").map((v) => v.toString()),
+      paymentMethod: (formData.get("paymentMethod") ?? "").toString().trim() || null,
       tierId: tier.id,
       planId: plan.id,
       tierName: tier.name,

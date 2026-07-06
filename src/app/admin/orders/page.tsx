@@ -132,8 +132,8 @@ export default async function AdminOrders({
                       {o.ticketMethod ? (
                         <p className="mt-1 text-xs text-slate-400">กดบัตร: {o.ticketMethod}</p>
                       ) : null}
-                      {o.paymentMethods.length > 0 ? (
-                        <p className="text-xs text-slate-400">ชำระ: {o.paymentMethods.join(", ")}</p>
+                      {o.paymentMethod ? (
+                        <p className="text-xs text-slate-400">วิธีชำระ: {o.paymentMethod}</p>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 text-slate-500">{fmtDate(o.createdAt)}</td>

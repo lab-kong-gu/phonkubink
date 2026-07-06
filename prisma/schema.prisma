@@ -45,8 +45,8 @@ model Concert {
   status      ConcertStatus @default(DRAFT)
 
   // Admin-editable, per-concert option lists shown on the booking form.
-  ticketMethods  String[] @default(["กดเอง", "จ้างร้านอื่นกด", "จ้างร้านผ่อนกดบัตร"]) // วิธีการกดบัตร (pick one)
-  paymentMethods String[] @default(["thaiqr", "ลูกค้าชำระเองที่เคาเตอร์"]) // วิธีการชำระเงิน (pick many)
+  ticketMethods  String[] @default(["กดเอง", "จ้างร้านอื่นกด", "จ้างร้านผ่อนกดบัตร"]) // วิธีการกดบัตร options (customer picks one)
+  paymentMethods String[] @default(["thaiqr", "ลูกค้าชำระเองที่เคาเตอร์"]) // วิธีชำระค่าบัตร options (customer picks one)
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -108,8 +108,8 @@ model Order {
   customerPhone String?
 
   // customer's booking-form choices (options come from the concert's lists)
-  ticketMethod   String? // วิธีการกดบัตร — one choice
-  paymentMethods String[] @default([]) // วิธีการชำระเงิน — any number of choices
+  ticketMethod  String? // วิธีการกดบัตร — one choice
+  paymentMethod String? // วิธีชำระค่าบัตร — one choice
 
   tierId String?
   tier   TicketTier? @relation(fields: [tierId], references: [id])
