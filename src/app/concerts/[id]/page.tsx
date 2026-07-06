@@ -5,12 +5,19 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { baht } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
-import { IconPin, IconCalendar, IconClock, IconShield } from "../../_components/icons";
+import { IconPin, IconCalendar, IconClock, IconShield, IconCheck } from "../../_components/icons";
 import { createOrder } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConcertDetail({ params }: { params: { id: string } }) {
+export default async function ConcertDetail({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { booked?: string };
+}) {
+  const justBooked = searchParams?.booked === "1";
   const user = await requireUser();
   const concert = await prisma.concert.findUnique({
     where: { id: params.id },
@@ -35,6 +42,28 @@ export default async function ConcertDetail({ params }: { params: { id: string }
 
   return (
     <AppShell active="concerts">
+      {justBooked && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#DFF3EA]">
+              <IconCheck className="h-10 w-10 text-[#0F766E]" />
+            </div>
+            <h2 className="mt-5 text-2xl font-bold text-brand-navy">จองคิวสำเร็จ 🎉</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+              เราได้ส่งใบแจ้งชำระมัดจำไปที่แชท LINE ของคุณแล้ว โอนมัดจำแล้วส่งรูปสลิปกลับมาในแชทเพื่อยืนยันการจองได้เลยครับ
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-6 block w-full rounded-2xl bg-brand-pink px-6 py-3.5 font-semibold text-white hover:opacity-90"
+            >
+              ไปที่แดชบอร์ด
+            </Link>
+            <Link href="/tickets" className="mt-3 inline-block text-sm font-medium text-brand-pink hover:underline">
+              ดูการจองของฉัน
+            </Link>
+          </div>
+        </div>
+      )}
       <Link href="/concerts" className="text-sm text-slate-500 hover:underline">
         ← กลับไปหน้าคอนเสิร์ต
       </Link>
