@@ -53,7 +53,7 @@ export async function createOrder(formData: FormData) {
       downAmount: tier.downAmount,
       weeklyAmount: plan.weeklyAmount,
       totalAmount: total,
-      status: "AWAITING_DOWNPAYMENT",
+      status: "AWAITING_DEPOSIT",
       installments: { create: installments },
     },
     include: { installments: true },

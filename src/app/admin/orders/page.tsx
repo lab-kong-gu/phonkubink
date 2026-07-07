@@ -5,6 +5,7 @@ import { baht, remainingAmount } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
 import {
   orderStatusLabel,
+  orderTimeline,
   nextActionLabel,
   isActive,
   isIssued,
@@ -16,16 +17,6 @@ import { IconSearch } from "../../_components/icons";
 import { advanceOrder, cancelOrderAdmin, approveDocsOrder, rejectDocsOrder, resubmitDocsOrder } from "./actions";
 
 export const dynamic = "force-dynamic";
-
-// 4-step booking timeline: จอง → ดาวน์ → เอกสาร → ออกบัตร
-function timeline(status: string): { done: number; label: string; cancelled?: boolean } {
-  if (isCancelled(status)) return { done: 0, label: "ยกเลิกแล้ว", cancelled: true };
-  if (isIssued(status)) return { done: 4, label: "ครบทุกขั้นตอน" };
-  if (isDocsRejected(status)) return { done: 2, label: "เอกสารไม่ผ่าน · รอแก้ไข" };
-  if (status === "DOCS_APPROVED") return { done: 3, label: "ถัดไป · ออกบัตร" };
-  if (isAwaitingDocsReview(status)) return { done: 2, label: "ถัดไป · ตรวจเอกสาร" };
-  return { done: 1, label: "ถัดไป · ชำระเงินดาวน์" };
-}
 
 export default async function AdminOrders({
   searchParams,
@@ -176,7 +167,7 @@ export default async function AdminOrders({
           {orders.map((o) => {
             const name = o.customerName ?? o.user.displayName ?? "ผู้ใช้";
             const st = orderStatusLabel(o.status);
-            const tl = timeline(o.status);
+            const tl = orderTimeline(o.status);
             const paidInst = o.installments.filter((i) => i.status === "PAID").length;
             const totalInst = o.installments.length;
             const paidAmount = o.installments.reduce((t, i) => t + parseFloat(String(i.amountPaid)), 0);
@@ -184,15 +175,15 @@ export default async function AdminOrders({
             const advanceLabel = nextActionLabel(o.status);
             return (
               <div key={o.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                {/* header row */}
+                {/* header: big name + phone + methods */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#FCE7F1] text-sm font-semibold text-brand-pink">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#FCE7F1] text-base font-bold text-brand-pink">
                       {name.charAt(0)}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-brand-navy">{name}</p>
-                      <p className="truncate text-xs text-slate-400">
+                      <p className="text-lg font-bold text-brand-navy">{name}</p>
+                      <p className="truncate text-sm text-slate-500">
                         {[o.customerPhone, o.user.email].filter(Boolean).join(" · ") || "—"}
                       </p>
                     </div>
@@ -200,8 +191,18 @@ export default async function AdminOrders({
                   <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${st.cls}`}>{st.label}</span>
                 </div>
 
+                {/* prominent method pills */}
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-lg bg-[#FCE7F1] px-3 py-1.5 font-medium text-brand-pink">
+                    วิธีกดบัตร: {o.ticketMethod ?? "—"}
+                  </span>
+                  <span className="rounded-lg bg-sky-50 px-3 py-1.5 font-medium text-sky-700">
+                    วิธีชำระ: {o.paymentMethod ?? "—"}
+                  </span>
+                </div>
+
                 {/* pills */}
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-600">โซน {o.tierName}</span>
                   <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-600">
                     แผน · {o.weeks} งวด · {baht(o.weeklyAmount)}
@@ -216,22 +217,6 @@ export default async function AdminOrders({
                     </span>
                   </span>
                 </div>
-
-                {/* new fields */}
-                {(o.ticketMethod || o.paymentMethod) && (
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                    {o.ticketMethod ? (
-                      <span>
-                        <span className="text-slate-400">วิธีกดบัตร:</span> {o.ticketMethod}
-                      </span>
-                    ) : null}
-                    {o.paymentMethod ? (
-                      <span>
-                        <span className="text-slate-400">วิธีชำระค่าบัตร:</span> {o.paymentMethod}
-                      </span>
-                    ) : null}
-                  </div>
-                )}
 
                 {isDocsRejected(o.status) && o.docsRejectionReason ? (
                   <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-500">

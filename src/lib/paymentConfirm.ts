@@ -61,15 +61,21 @@ export async function markInstallmentPaidAndNotify(
     },
   });
 
-  // Auto-advance the order past the down-payment step as soon as ANY money
-  // (deposit or full) lands on the down-payment installment — admin still
-  // manually reviews docs + issues the ticket afterwards.
+  // Auto-advance the booking flow when a slip lands on the down-payment
+  // installment:
+  //  - deposit confirmed (first money, while รอชำระมัดจำ) → รอส่งเอกสาร
+  //  - down payment fully paid (while รอชำระเงินดาวน์)   → รอกดบัตร
   const justUnlockedDocs =
     installment.isDownPayment &&
     wasUnpaid &&
-    (order.status === "AWAITING_DOWNPAYMENT" || order.status === "PENDING");
-  if (justUnlockedDocs) {
-    await prisma.order.update({ where: { id: order.id }, data: { status: "AWAITING_DOCS" } });
+    (order.status === "AWAITING_DEPOSIT" || order.status === "PENDING");
+  const downPaymentComplete =
+    installment.isDownPayment &&
+    isFullyPaid &&
+    (order.status === "AWAITING_DOWNPAYMENT" || order.status === "DOCS_APPROVED");
+  const newStatus = justUnlockedDocs ? "AWAITING_DOCS" : downPaymentComplete ? "AWAITING_TICKET" : null;
+  if (newStatus) {
+    await prisma.order.update({ where: { id: order.id }, data: { status: newStatus } });
   }
 
   const remainingInstallments = await prisma.installment.findMany({
@@ -103,6 +109,12 @@ export async function markInstallmentPaidAndNotify(
   ];
   if (justUnlockedDocs) {
     messages.push(buildSendDocsMessage());
+  }
+  if (downPaymentComplete) {
+    messages.push({
+      type: "text",
+      text: "ได้รับเงินดาวน์ครบแล้วค่ะ 🎉 ทางร้านจะดำเนินการกดบัตรให้เร็ว ๆ นี้ค่ะ",
+    });
   }
   if (remainingInstallments.length === 0) {
     messages.push({

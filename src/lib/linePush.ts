@@ -293,17 +293,24 @@ export function buildSendDocsMessage(): LineMessage {
   return { type: "text", text: "ส่งเอกสารได้เลยครับลูกค้า" };
 }
 
-// Admin approved the submitted documents — next step is ticket issuance.
-export function buildDocsApprovedFlex(order: PushOrderInfo): LineMessage {
+// Admin approved the documents. Next step: the customer pays the remaining
+// down payment (เงินดาวน์) — so this prompts that payment with the amount +
+// account details. If nothing's left on the down payment, it just says รอกดบัตร.
+export function buildDocsApprovedFlex(order: PushOrderInfo, remainingDown: number): LineMessage {
+  const needsPayment = remainingDown > 0.001;
+  const rows: { label: string; value: string }[] = [{ label: "โซน", value: order.tierName }];
+  if (needsPayment) {
+    rows.push({ label: "เงินดาวน์คงเหลือ", value: baht(remainingDown) });
+    rows.push(...accountRows());
+  } else {
+    rows.push({ label: "สถานะ", value: "รอกดบัตร" });
+  }
   return bubble({
     header: "ตรวจเอกสารแล้ว · ผ่อนบัตรร้านอิ๊งค์",
     headerColor: "#0D9488",
     title: `เอกสารผ่าน — ${order.concertName} ✅`,
-    rows: [
-      { label: "โซน", value: order.tierName },
-      { label: "สถานะ", value: "เอกสารผ่าน รอออกบัตร" },
-    ],
-    footerNote: "แอดมินจะดำเนินการออกบัตรให้ในลำดับถัดไป",
+    rows,
+    footerNote: needsPayment ? SLIP_NOTE : "ทางร้านจะดำเนินการกดบัตรให้ในลำดับถัดไปครับ",
   });
 }
 

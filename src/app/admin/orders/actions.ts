@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { nextStatus } from "@/lib/orderStatus";
+import { remainingAmount } from "@/lib/money";
 import {
   pushMessages,
   buildTicketIssuedFlex,
@@ -80,22 +81,29 @@ export async function cancelOrderAdmin(formData: FormData) {
 export async function approveDocsOrder(formData: FormData) {
   await requireAdmin();
   const id = (formData.get("id") ?? "").toString();
-  const order = await prisma.order.findUnique({ where: { id }, include: { concert: true } });
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { concert: true, installments: true },
+  });
   if (!order) return;
   if (order.status !== "AWAITING_DOCS" && order.status !== "CONFIRMED" && order.status !== "DOCS_REJECTED") return;
 
+  // Docs approved → the customer now pays the rest of the down payment. If the
+  // down payment already happens to be fully paid, skip straight to รอกดบัตร.
+  const down = order.installments.find((i) => i.isDownPayment);
+  const remainingDown = down ? remainingAmount(down.amount, down.amountPaid) : 0;
+  const newStatus = remainingDown > 0.001 ? "AWAITING_DOWNPAYMENT" : "AWAITING_TICKET";
+
   await prisma.order.update({
     where: { id },
-    data: { status: "DOCS_APPROVED", docsRejectionReason: null },
+    data: { status: newStatus, docsRejectionReason: null },
   });
 
   await pushMessages(order.lineUserId, [
-    buildDocsApprovedFlex({
-      id: order.id,
-      tierName: order.tierName,
-      concertName: order.concert.name,
-      totalAmount: order.totalAmount,
-    }),
+    buildDocsApprovedFlex(
+      { id: order.id, tierName: order.tierName, concertName: order.concert.name, totalAmount: order.totalAmount },
+      remainingDown
+    ),
   ]);
 
   revalidatePath("/admin/orders");

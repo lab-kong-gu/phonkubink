@@ -231,14 +231,16 @@ enum ConcertStatus {
 }
 
 enum OrderStatus {
-  // booking flow
-  AWAITING_DOWNPAYMENT // รอชำระดาวน์
-  AWAITING_DOCS // รอตรวจเอกสาร (customer paid deposit, waiting for them to submit + admin to review paperwork)
-  DOCS_APPROVED // เอกสารผ่าน (admin approved — ready to issue ticket)
+  // booking flow: มัดจำ → เอกสาร → เงินดาวน์ → กดบัตร → ออกบัตร
+  AWAITING_DEPOSIT // รอชำระมัดจำ (just booked — pay the deposit slice of the down payment)
+  AWAITING_DOCS // รอส่งเอกสาร (deposit confirmed — customer submits docs, admin reviews)
   DOCS_REJECTED // เอกสารไม่ผ่าน (admin rejected — see docsRejectionReason, customer must resubmit)
-  TICKET_ISSUED // ออกบัตรแล้ว
+  AWAITING_DOWNPAYMENT // รอชำระเงินดาวน์ (docs approved — pay the rest of the down payment)
+  AWAITING_TICKET // รอกดบัตร (down payment complete — shop presses/buys the ticket)
+  TICKET_ISSUED // ออกบัตรแล้ว (ticket issued — weekly งวด plan starts)
   CANCELLED // ยกเลิก
   // legacy (kept so old rows stay valid)
+  DOCS_APPROVED
   PENDING
   CONFIRMED
   COMPLETED
