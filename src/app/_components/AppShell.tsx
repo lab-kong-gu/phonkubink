@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import Sidebar from "./Sidebar";
 
-type NavKey = "dashboard" | "concerts" | "tickets" | "profile";
+type NavKey = "dashboard" | "concerts" | "tickets";
 
 // Wraps every logged-in page with the navy sidebar.
 export default async function AppShell({

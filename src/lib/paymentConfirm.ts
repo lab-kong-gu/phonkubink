@@ -1,16 +1,14 @@
 // Shared "credit a payment toward an installment" logic. No payment gateway
-// is involved anymore (Phase 4.2) — customers transfer manually by PromptPay
-// and send a slip photo in LINE chat, which gets verified via EasySlip (see
-// the image-message handling in src/app/api/line/webhook/route.ts) and
-// either auto-confirmed or routed to the admin review queue (/admin/slips,
-// src/app/admin/slips/actions.ts). Both paths call this same function.
+// and no automatic slip verification — customers transfer manually by
+// PromptPay and send a slip photo in LINE chat; the ADMIN checks the slip by
+// eye and confirms it with the "ยืนยันสลิป" button on the order
+// (/admin/orders → confirmSlipPayment), which calls this function.
 // Supports PARTIAL payments: a down payment can be settled in two slips
 // (deposit, then the remainder).
 //
-// Idempotent via PaymentLog.gatewayChargeId (unique) — the "charge id" is
-// now EasySlip's transRef (or a synthetic `manual-{submissionId}` id when
-// EasySlip couldn't read one) — if the same one is credited twice (e.g. a
-// re-processed LINE webhook, or a double-clicked admin confirm), the second
+// Idempotent via PaymentLog.gatewayChargeId (unique) — the "charge id" is a
+// synthetic `manual-admin-{installmentId}-{paidSoFar}` id — if the same one
+// is credited twice (e.g. a double-clicked admin confirm), the second
 // attempt is a no-op.
 
 import { revalidatePath } from "next/cache";

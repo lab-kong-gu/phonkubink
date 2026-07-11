@@ -33,9 +33,9 @@ export function orderStatusLabel(s: string): { label: string; cls: string } {
 
 // Single unambiguous next step for a generic admin "advance" button.
 // AWAITING_DOCS / DOCS_REJECTED are NOT here — they branch via dedicated
-// approve/reject/resubmit actions. The two payment steps auto-advance when
-// EasySlip confirms a slip, but the admin can also advance them by hand as a
-// fallback (e.g. if EasySlip can't read the slip).
+// approve/reject/resubmit actions. The two payment steps advance automatically
+// when the admin confirms the customer's LINE slip (confirmSlipPayment →
+// markInstallmentPaidAndNotify); the UI only offers "advance" for ออกบัตร.
 export function nextStatus(s: string): string | null {
   if (s === "AWAITING_DEPOSIT" || s === "PENDING") return "AWAITING_DOCS";
   if (s === "AWAITING_DOWNPAYMENT" || s === "DOCS_APPROVED") return "AWAITING_TICKET";

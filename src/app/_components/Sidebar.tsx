@@ -4,24 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   IconDashboard,
-  IconMusic,
   IconTicket,
-  IconUser,
   IconLogout,
   IconMenu,
   IconClose,
   IconShield,
 } from "./icons";
 
-type NavKey = "dashboard" | "concerts" | "tickets" | "profile" | "admin";
+// "concerts" stays in the type (the /concerts pages still exist and pass it as
+// `active`) but has no sidebar entry — the list is reached via the dashboard's
+// "View all" button instead.
+type NavKey = "dashboard" | "concerts" | "tickets" | "admin";
 
 type NavItem = { key: NavKey; href: string; label: string; Icon: (p: { className?: string }) => JSX.Element };
 
 const NAV: NavItem[] = [
   { key: "dashboard", href: "/dashboard", label: "Dashboard", Icon: IconDashboard },
-  { key: "concerts", href: "/concerts", label: "Concerts", Icon: IconMusic },
   { key: "tickets", href: "/tickets", label: "Ticket History", Icon: IconTicket },
-  { key: "profile", href: "/profile", label: "Profile", Icon: IconUser },
 ];
 
 const ADMIN_ITEM: NavItem = { key: "admin", href: "/admin", label: "Manage Concerts", Icon: IconShield };

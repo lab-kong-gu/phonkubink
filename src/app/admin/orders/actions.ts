@@ -4,13 +4,51 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { nextStatus } from "@/lib/orderStatus";
-import { remainingAmount } from "@/lib/money";
+import { remainingAmount, depositAmountFor } from "@/lib/money";
+import { markInstallmentPaidAndNotify } from "@/lib/paymentConfirm";
 import {
   pushMessages,
   buildTicketIssuedFlex,
   buildDocsApprovedFlex,
   buildDocsRejectedFlex,
 } from "@/lib/linePush";
+
+// The customer sent a bank-transfer slip in LINE chat and the admin checked it
+// by eye — credit the next open installment. Deposit-stage orders are credited
+// the fixed booking deposit; everything else settles the earliest open งวด in
+// full. Crediting auto-advances the order status where relevant (see
+// markInstallmentPaidAndNotify) and pushes a receipt to the customer.
+export async function confirmSlipPayment(formData: FormData) {
+  await requireAdmin();
+  const id = (formData.get("id") ?? "").toString();
+  const order = await prisma.order.findUnique({ where: { id }, include: { installments: true } });
+  if (!order || order.status === "CANCELLED") return;
+
+  // Down payment first, then weekly งวด in order.
+  const open = order.installments
+    .filter((i) => i.status !== "PAID")
+    .sort((a, b) => Number(b.isDownPayment) - Number(a.isDownPayment) || a.weekNumber - b.weekNumber);
+  const target = open[0];
+  if (!target) return;
+
+  const untouchedDown = target.isDownPayment && parseFloat(String(target.amountPaid)) <= 0;
+  const depositStage = order.status === "AWAITING_DEPOSIT" || order.status === "PENDING";
+  const amount =
+    untouchedDown && depositStage
+      ? depositAmountFor(target.amount)
+      : remainingAmount(target.amount, target.amountPaid);
+  if (amount <= 0.001) return;
+
+  // Synthetic charge id is stable per (installment, amount-paid-so-far), so a
+  // double-clicked confirm button generates the same id and the second credit
+  // is a no-op (unique-constraint guard in markInstallmentPaidAndNotify).
+  const paidSoFar = Math.round(parseFloat(String(target.amountPaid)) * 100);
+  await markInstallmentPaidAndNotify(target.id, `manual-admin-${target.id}-${paidSoFar}`, amount);
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  revalidatePath("/tickets");
+}
 
 // Move an order to the next step in the booking flow.
 export async function advanceOrder(formData: FormData) {

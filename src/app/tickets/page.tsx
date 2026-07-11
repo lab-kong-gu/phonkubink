@@ -6,7 +6,64 @@ import { baht, remainingAmount } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { IconPin, IconCalendar, IconX, IconEdit } from "../_components/icons";
 import { cancelOrder, updateOrderPlan } from "./actions";
-import { orderStatusLabel, isIssued } from "@/lib/orderStatus";
+import { orderStatusLabel, orderTimeline, isIssued } from "@/lib/orderStatus";
+
+// Booking-flow checkpoints shown on each ticket card — same 4 steps as the
+// admin timeline: มัดจำ → เอกสาร → เงินดาวน์ → กดบัตร.
+const TIMELINE_STEPS = ["มัดจำ", "เอกสาร", "เงินดาวน์", "กดบัตร"];
+
+function StatusTimeline({ status }: { status: string }) {
+  const tl = orderTimeline(status);
+  return (
+    <div className="mt-4 rounded-xl bg-slate-50 px-3 py-3">
+      <div className="grid grid-cols-4">
+        {TIMELINE_STEPS.map((label, i) => {
+          const done = !tl.cancelled && i < tl.done;
+          const current = !tl.cancelled && i === tl.done && tl.done < TIMELINE_STEPS.length;
+          return (
+            <div key={label} className="flex flex-col items-center">
+              <div className="flex w-full items-center">
+                {/* connector into this checkpoint (hidden on the first) */}
+                <span
+                  className={`h-0.5 flex-1 ${i === 0 ? "opacity-0" : done ? "bg-brand-pink" : "bg-slate-200"}`}
+                />
+                <span
+                  className={`h-3 w-3 shrink-0 rounded-full ${
+                    done
+                      ? "bg-brand-pink"
+                      : current
+                        ? "border-2 border-brand-pink bg-white"
+                        : "border-2 border-slate-200 bg-white"
+                  }`}
+                />
+                {/* connector out of this checkpoint (hidden on the last) */}
+                <span
+                  className={`h-0.5 flex-1 ${
+                    i === TIMELINE_STEPS.length - 1
+                      ? "opacity-0"
+                      : !tl.cancelled && i + 1 < tl.done
+                        ? "bg-brand-pink"
+                        : "bg-slate-200"
+                  }`}
+                />
+              </div>
+              <span
+                className={`mt-1.5 text-[11px] ${
+                  done || current ? "font-medium text-brand-navy" : "text-slate-400"
+                }`}
+              >
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className={`mt-2 text-center text-xs ${tl.cancelled ? "text-rose-500" : "text-slate-500"}`}>
+        {tl.label}
+      </p>
+    </div>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +144,9 @@ export default async function Tickets() {
                     </p>
                   </div>
                 </div>
+
+                {/* Booking-progress timeline (line + circle per checkpoint) */}
+                <StatusTimeline status={o.status} />
 
                 {o.status === "DOCS_REJECTED" && o.docsRejectionReason ? (
                   <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">

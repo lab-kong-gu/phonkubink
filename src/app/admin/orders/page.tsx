@@ -1,12 +1,11 @@
 import Link from "next/link";
 import AdminShell from "../_components/AdminShell";
 import { prisma } from "@/lib/prisma";
-import { baht, remainingAmount } from "@/lib/money";
+import { baht, remainingAmount, depositAmountFor } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
 import {
   orderStatusLabel,
   orderTimeline,
-  nextActionLabel,
   isActive,
   isIssued,
   isCancelled,
@@ -14,7 +13,14 @@ import {
   isDocsRejected,
 } from "@/lib/orderStatus";
 import { IconSearch } from "../../_components/icons";
-import { advanceOrder, cancelOrderAdmin, approveDocsOrder, rejectDocsOrder, resubmitDocsOrder } from "./actions";
+import {
+  advanceOrder,
+  cancelOrderAdmin,
+  approveDocsOrder,
+  rejectDocsOrder,
+  resubmitDocsOrder,
+  confirmSlipPayment,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -172,7 +178,26 @@ export default async function AdminOrders({
             const totalInst = o.installments.length;
             const paidAmount = o.installments.reduce((t, i) => t + parseFloat(String(i.amountPaid)), 0);
             const remaining = o.installments.reduce((t, i) => t + remainingAmount(i.amount, i.amountPaid), 0);
-            const advanceLabel = nextActionLabel(o.status);
+            // Next payment the customer's LINE slip should cover — down payment
+            // first, then weekly งวด in order. Mirrors confirmSlipPayment.
+            const openInst = o.installments
+              .filter((i) => i.status !== "PAID")
+              .sort((a, b) => Number(b.isDownPayment) - Number(a.isDownPayment) || a.weekNumber - b.weekNumber);
+            const nextInst = openInst[0];
+            const depositStage = o.status === "AWAITING_DEPOSIT" || o.status === "PENDING";
+            const untouchedDown = nextInst?.isDownPayment && parseFloat(String(nextInst.amountPaid)) <= 0;
+            const slipAmount = nextInst
+              ? untouchedDown && depositStage
+                ? depositAmountFor(nextInst.amount)
+                : remainingAmount(nextInst.amount, nextInst.amountPaid)
+              : 0;
+            const slipLabel = nextInst
+              ? nextInst.isDownPayment
+                ? depositStage
+                  ? "ยืนยันสลิปมัดจำ"
+                  : "ยืนยันสลิปเงินดาวน์"
+                : `ยืนยันสลิปงวด ${nextInst.weekNumber}`
+              : null;
             return (
               <div key={o.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 {/* header: big name + phone + methods */}
@@ -290,11 +315,22 @@ export default async function AdminOrders({
                           ลูกค้าส่งเอกสารใหม่แล้ว
                         </button>
                       </form>
-                    ) : isActive(o.status) && advanceLabel ? (
-                      <form action={advanceOrder}>
+                    ) : null}
+                    {/* Manual slip confirmation — admin checked the transfer
+                        slip in LINE chat and credits the next open งวด. */}
+                    {!isCancelled(o.status) && nextInst && slipAmount > 0.001 && slipLabel ? (
+                      <form action={confirmSlipPayment}>
                         <input type="hidden" name="id" value={o.id} />
                         <button className="rounded-lg bg-brand-pink px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
-                          {advanceLabel}
+                          {slipLabel} · {baht(slipAmount)}
+                        </button>
+                      </form>
+                    ) : null}
+                    {o.status === "AWAITING_TICKET" ? (
+                      <form action={advanceOrder}>
+                        <input type="hidden" name="id" value={o.id} />
+                        <button className="rounded-lg bg-brand-navy px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
+                          ออกบัตร
                         </button>
                       </form>
                     ) : null}

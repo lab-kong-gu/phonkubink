@@ -35,7 +35,7 @@ export default async function Home() {
         <div className="mt-6 flex flex-col gap-2.5">
           <Feature bg="#FCE7F1" fg="#C13B72" Icon={IconCalendar} title="ผ่อนสบาย" desc="แบ่งจ่ายเป็นงวด ไม่ต้องจ่ายเต็ม" />
           <Feature bg="#FFE8D6" fg="#C2691C" Icon={IconBell} title="ยืนยันผ่าน LINE" desc="แจ้งบิล ส่งสลิป รับใบเสร็จ ในแชทเดียว" />
-          <Feature bg="#DFF3EA" fg="#0F766E" Icon={IconShield} title="ปลอดภัย" desc="ตรวจสอบสลิปอัตโนมัติ" />
+          <Feature bg="#DFF3EA" fg="#0F766E" Icon={IconShield} title="ปลอดภัย" desc="แอดมินตรวจสอบสลิปและยืนยันให้ทุกงวด" />
         </div>
 
         <div className="mt-4 rounded-2xl bg-white p-4">
