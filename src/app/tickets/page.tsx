@@ -6,17 +6,15 @@ import { baht, remainingAmount } from "@/lib/money";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { IconPin, IconCalendar, IconX, IconEdit } from "../_components/icons";
 import { cancelOrder, updateOrderPlan } from "./actions";
-import { orderStatusLabel, orderTimeline, isIssued } from "@/lib/orderStatus";
+import { orderStatusLabel, orderTimeline, TIMELINE_STEPS, isIssued } from "@/lib/orderStatus";
 
-// Booking-flow checkpoints shown on each ticket card — same 4 steps as the
-// admin timeline: มัดจำ → เอกสาร → เงินดาวน์ → กดบัตร.
-const TIMELINE_STEPS = ["มัดจำ", "เอกสาร", "เงินดาวน์", "กดบัตร"];
-
-function StatusTimeline({ status }: { status: string }) {
-  const tl = orderTimeline(status);
+// Booking-flow timeline shown on each ticket card — the same 7 checkpoints as
+// the admin side (see TIMELINE_STEPS in lib/orderStatus).
+function StatusTimeline({ status, allPaid }: { status: string; allPaid: boolean }) {
+  const tl = orderTimeline(status, allPaid);
   return (
-    <div className="mt-4 rounded-xl bg-slate-50 px-3 py-3">
-      <div className="grid grid-cols-4">
+    <div className="mt-4 rounded-xl bg-slate-50 px-2 py-3">
+      <div className="grid grid-cols-7">
         {TIMELINE_STEPS.map((label, i) => {
           const done = !tl.cancelled && i < tl.done;
           const current = !tl.cancelled && i === tl.done && tl.done < TIMELINE_STEPS.length;
@@ -48,7 +46,7 @@ function StatusTimeline({ status }: { status: string }) {
                 />
               </div>
               <span
-                className={`mt-1.5 text-[11px] ${
+                className={`mt-1.5 px-0.5 text-center text-[10px] leading-tight ${
                   done || current ? "font-medium text-brand-navy" : "text-slate-400"
                 }`}
               >
@@ -146,7 +144,7 @@ export default async function Tickets() {
                 </div>
 
                 {/* Booking-progress timeline (line + circle per checkpoint) */}
-                <StatusTimeline status={o.status} />
+                <StatusTimeline status={o.status} allPaid={o.installments.every((i) => i.status === "PAID")} />
 
                 {o.status === "DOCS_REJECTED" && o.docsRejectionReason ? (
                   <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">

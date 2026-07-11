@@ -67,14 +67,33 @@ export function isDocsRejected(s: string): boolean {
   return s === "DOCS_REJECTED";
 }
 
-// 4-step timeline: มัดจำ → เอกสาร → เงินดาวน์ → กดบัตร. Returns how many steps
-// are done (0–4) and the label shown next to the dots.
-export function orderTimeline(s: string): { done: number; label: string; cancelled?: boolean } {
+// 7-step timeline:
+//   1. ขั้นตอนการโอนจอง  2. ส่งเอกสาร  3. วางดาวน์  4. รอชำระค่าบัตรคอนเสิร์ต
+//   5. ชำระสำเร็จ  6. กำลังผ่อน  7. ชำระครบแล้ว
+// Steps 1–5 follow order.status; 6–7 depend on installment progress, so pass
+// `allPaid` (every งวด PAID) for issued orders.
+export const TIMELINE_STEPS = [
+  "ขั้นตอนการโอนจอง",
+  "ส่งเอกสาร",
+  "วางดาวน์",
+  "รอชำระค่าบัตรคอนเสิร์ต",
+  "ชำระสำเร็จ",
+  "กำลังผ่อน",
+  "ชำระครบแล้ว",
+];
+
+// Returns how many steps are done (0–7) and the label shown with the dots.
+export function orderTimeline(s: string, allPaid = false): { done: number; label: string; cancelled?: boolean } {
   if (isCancelled(s)) return { done: 0, label: "ยกเลิกแล้ว", cancelled: true };
-  if (isIssued(s)) return { done: 4, label: "ครบทุกขั้นตอน" };
+  if (isIssued(s)) {
+    // Ticket bought & issued → steps 1–5 done. While weekly งวด are still
+    // open the order sits on "กำลังผ่อน"; once everything is paid, all 7 done.
+    if (s === "COMPLETED" || allPaid) return { done: 7, label: "ชำระครบแล้ว 🎉" };
+    return { done: 5, label: "กำลังผ่อนชำระรายงวด" };
+  }
   if (isDocsRejected(s)) return { done: 1, label: "เอกสารไม่ผ่าน · รอแก้ไข" };
-  if (s === "AWAITING_TICKET") return { done: 3, label: "ถัดไป · กดบัตร" };
-  if (s === "AWAITING_DOWNPAYMENT" || s === "DOCS_APPROVED") return { done: 2, label: "ถัดไป · ชำระเงินดาวน์" };
-  if (isAwaitingDocsReview(s)) return { done: 1, label: "ถัดไป · ตรวจเอกสาร" };
-  return { done: 0, label: "ถัดไป · ชำระมัดจำ" };
+  if (s === "AWAITING_TICKET") return { done: 3, label: "ถัดไป · ชำระค่าบัตรคอนเสิร์ต" };
+  if (s === "AWAITING_DOWNPAYMENT" || s === "DOCS_APPROVED") return { done: 2, label: "ถัดไป · วางดาวน์" };
+  if (isAwaitingDocsReview(s)) return { done: 1, label: "ถัดไป · ส่งเอกสาร" };
+  return { done: 0, label: "ถัดไป · โอนเงินจอง" };
 }

@@ -173,11 +173,11 @@ export default async function AdminOrders({
           {orders.map((o) => {
             const name = o.customerName ?? o.user.displayName ?? "ผู้ใช้";
             const st = orderStatusLabel(o.status);
-            const tl = orderTimeline(o.status);
             const paidInst = o.installments.filter((i) => i.status === "PAID").length;
             const totalInst = o.installments.length;
             const paidAmount = o.installments.reduce((t, i) => t + parseFloat(String(i.amountPaid)), 0);
             const remaining = o.installments.reduce((t, i) => t + remainingAmount(i.amount, i.amountPaid), 0);
+            const tl = orderTimeline(o.status, remaining <= 0.001);
             // Next payment the customer's LINE slip should cover — down payment
             // first, then weekly งวด in order. Mirrors confirmSlipPayment.
             const openInst = o.installments
@@ -253,15 +253,15 @@ export default async function AdminOrders({
                   {/* timeline + amount */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      {[0, 1, 2, 3].map((i) => (
+                      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                         <span key={i} className="flex items-center">
                           <span
                             className={`h-2.5 w-2.5 rounded-full ${
                               tl.cancelled ? "bg-slate-200" : i < tl.done ? "bg-brand-pink" : "border-2 border-slate-200 bg-white"
                             }`}
                           />
-                          {i < 3 ? (
-                            <span className={`h-0.5 w-6 ${!tl.cancelled && i < tl.done - 1 ? "bg-brand-pink" : "bg-slate-200"}`} />
+                          {i < 6 ? (
+                            <span className={`h-0.5 w-3.5 ${!tl.cancelled && i < tl.done - 1 ? "bg-brand-pink" : "bg-slate-200"}`} />
                           ) : null}
                         </span>
                       ))}
