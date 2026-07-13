@@ -19,7 +19,7 @@ export default async function Concerts() {
 
   return (
     <AppShell active="concerts">
-      <h1 className="text-3xl font-extrabold text-brand-navy">Concerts</h1>
+      <h1 className="text-3xl font-extrabold text-brand-navy">คอนเสิร์ตทั้งหมด</h1>
       <p className="mt-1 text-sm text-slate-500">เลือกคอนเสิร์ตที่อยากไป แล้วผ่อนสบาย ๆ</p>
 
       {concerts.length === 0 ? (
@@ -50,7 +50,7 @@ export default async function Concerts() {
                 </p>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-sm font-semibold text-brand-pink">
-                    From {baht(c.tiers.length ? Math.min(...c.tiers.map((t) => Number(t.price))) : 0)} ·{" "}
+                    เริ่มต้น {baht(c.tiers.length ? Math.min(...c.tiers.map((t) => Number(t.price))) : 0)} ·{" "}
                     {c._count.tiers} โซน
                   </span>
                   <span className="grid h-7 w-7 place-items-center rounded-full bg-[#FCE7F1] text-brand-pink group-hover:bg-brand-pink group-hover:text-white">

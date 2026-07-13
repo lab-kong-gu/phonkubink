@@ -13,14 +13,14 @@ import {
 
 // "concerts" stays in the type (the /concerts pages still exist and pass it as
 // `active`) but has no sidebar entry — the list is reached via the dashboard's
-// "View all" button instead.
+// "ดูทั้งหมด" button instead.
 type NavKey = "dashboard" | "concerts" | "tickets" | "admin";
 
 type NavItem = { key: NavKey; href: string; label: string; Icon: (p: { className?: string }) => JSX.Element };
 
 const NAV: NavItem[] = [
-  { key: "dashboard", href: "/dashboard", label: "Dashboard", Icon: IconDashboard },
-  { key: "tickets", href: "/tickets", label: "Ticket History", Icon: IconTicket },
+  { key: "dashboard", href: "/dashboard", label: "หน้าหลัก", Icon: IconDashboard },
+  { key: "tickets", href: "/tickets", label: "ประวัติการจอง", Icon: IconTicket },
 ];
 
 const ADMIN_ITEM: NavItem = { key: "admin", href: "/admin", label: "Manage Concerts", Icon: IconShield };
@@ -64,7 +64,7 @@ export default function Sidebar({
           onClick={() => setOpen(false)}
           className="mt-3 flex items-center gap-3 rounded-xl bg-[#FCE7F1] px-3 py-2.5 text-sm font-medium text-brand-pink hover:opacity-90"
         >
-          <IconShield className="h-5 w-5" /> Manage Concerts
+          <IconShield className="h-5 w-5" /> จัดการคอนเสิร์ต
         </Link>
       ) : null}
       {/* Plain <a> so Next.js does NOT prefetch it (prefetch would silently log the user out) */}
@@ -72,7 +72,7 @@ export default function Sidebar({
         href="/api/auth/logout"
         className="mt-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
       >
-        <IconLogout className="h-5 w-5" /> Logout
+        <IconLogout className="h-5 w-5" /> ออกจากระบบ
       </a>
     </div>
   );

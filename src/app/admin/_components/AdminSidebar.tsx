@@ -37,7 +37,7 @@ export default function AdminSidebar({
       <img src="/logo.svg" alt="" className="h-10 w-10 rounded-full" />
       <div className="leading-tight">
         <p className="text-base font-extrabold tracking-tight text-brand-navy">ผ่อนบัตรร้านอิ๊งค์</p>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Admin Panel</p>
+        <p className="text-[10px] font-semibold tracking-widest text-slate-400">ระบบผู้ดูแล</p>
       </div>
     </div>
   );
@@ -78,7 +78,7 @@ export default function AdminSidebar({
           <div className="h-9 w-9 rounded-full bg-white/20" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">{user.displayName ?? "Admin"}</p>
+          <p className="truncate text-sm font-semibold text-white">{user.displayName ?? "แอดมิน"}</p>
           <p className="truncate text-xs text-slate-300">ผู้ดูแลระบบ</p>
         </div>
       </div>

@@ -86,8 +86,8 @@ export default async function Tickets() {
 
   return (
     <AppShell active="tickets">
-      <h1 className="text-3xl font-extrabold text-brand-navy">Your Ticket History</h1>
-      <p className="mt-1 text-sm text-slate-500">View all your past, current, and upcoming ticket details</p>
+      <h1 className="text-3xl font-extrabold text-brand-navy">ประวัติการจองของคุณ</h1>
+      <p className="mt-1 text-sm text-slate-500">ดูรายละเอียดการจองทั้งหมด ทั้งที่กำลังผ่อนและที่ผ่านมา</p>
 
       {orders.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-400">
@@ -161,7 +161,7 @@ export default async function Tickets() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-slate-400">Total Amount</p>
+                    <p className="text-xs text-slate-400">ยอดรวมทั้งหมด</p>
                     <p className="font-semibold text-brand-navy">{baht(o.totalAmount)}</p>
                   </div>
                 </div>
@@ -171,14 +171,14 @@ export default async function Tickets() {
                     <form action={cancelOrder} className="flex-1">
                       <input type="hidden" name="id" value={o.id} />
                       <button className="flex w-full items-center justify-center gap-1 rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50">
-                        <IconX className="h-4 w-4" /> Cancel Booking
+                        <IconX className="h-4 w-4" /> ยกเลิกการจอง
                       </button>
                     </form>
                   ) : null}
                   {editable ? (
                     <details className="flex-1">
                       <summary className="flex w-full cursor-pointer list-none items-center justify-center gap-1 rounded-lg bg-[#FCE7F1] px-3 py-2 text-xs font-medium text-brand-pink hover:opacity-90">
-                        <IconEdit className="h-4 w-4" /> View / Edit
+                        <IconEdit className="h-4 w-4" /> ดู / แก้ไขแผนผ่อน
                       </summary>
                       <form
                         action={updateOrderPlan}
@@ -242,7 +242,7 @@ export default async function Tickets() {
                       href={`/concerts/${o.concertId}`}
                       className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#FCE7F1] px-3 py-2 text-xs font-medium text-brand-pink hover:opacity-90"
                     >
-                      <IconEdit className="h-4 w-4" /> View
+                      <IconEdit className="h-4 w-4" /> ดูรายละเอียด
                     </Link>
                   )}
                 </div>

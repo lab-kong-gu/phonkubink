@@ -31,23 +31,23 @@ export default async function Dashboard() {
     <AppShell active="dashboard">
       {/* Hero */}
       <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-brand-navy via-purple-700 to-brand-pink p-8 text-white">
-        <p className="text-lg">👋 Welcome back,</p>
+        <p className="text-lg">👋 ยินดีต้อนรับกลับมา</p>
         <h1 className="text-4xl font-extrabold">{user.displayName ?? "เพื่อน"}!</h1>
         <p className="mt-1 max-w-sm text-sm text-white/80">
-          Find amazing concerts and experience unforgettable moments.
+          เลือกคอนเสิร์ตที่อยากดู แล้วผ่อนสบาย ๆ กับเรา
         </p>
         <div className="mt-5 flex max-w-xl items-center gap-2 rounded-xl bg-white px-4 py-3 text-slate-500">
           <IconSearch className="h-5 w-5" />
-          <span className="text-sm">Search concerts, artists, venues…</span>
+          <span className="text-sm">ค้นหาคอนเสิร์ต ศิลปิน สถานที่…</span>
         </div>
       </section>
 
       {/* Popular Concerts */}
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-brand-navy">Popular Concerts</h2>
+          <h2 className="text-lg font-bold text-brand-navy">คอนเสิร์ตยอดนิยม</h2>
           <Link href="/concerts" className="flex items-center gap-1 text-sm text-brand-pink hover:underline">
-            View all <IconChevronRight className="h-4 w-4" />
+            ดูทั้งหมด <IconChevronRight className="h-4 w-4" />
           </Link>
         </div>
         {popular.length === 0 ? (
@@ -78,7 +78,7 @@ export default async function Dashboard() {
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm font-semibold text-brand-pink">
-                      From {baht(c.tiers.length ? Math.min(...c.tiers.map((t) => Number(t.price))) : 0)}
+                      เริ่มต้น {baht(c.tiers.length ? Math.min(...c.tiers.map((t) => Number(t.price))) : 0)}
                     </span>
                     <span className="grid h-7 w-7 place-items-center rounded-full bg-[#FCE7F1] text-brand-pink group-hover:bg-brand-pink group-hover:text-white">
                       <IconArrowRight className="h-4 w-4" />
@@ -95,8 +95,8 @@ export default async function Dashboard() {
       <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl bg-[#FCE7F1]/60 p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-bold text-brand-navy">Upcoming Concerts</h3>
-            <Link href="/concerts" className="text-xs text-brand-pink hover:underline">View all</Link>
+            <h3 className="font-bold text-brand-navy">คอนเสิร์ตที่กำลังจะมาถึง</h3>
+            <Link href="/concerts" className="text-xs text-brand-pink hover:underline">ดูทั้งหมด</Link>
           </div>
           {upcoming.length === 0 ? (
             <p className="text-sm text-slate-400">ยังไม่มี</p>
@@ -128,31 +128,31 @@ export default async function Dashboard() {
         </div>
 
         <div className="rounded-2xl bg-[#FCE7F1]/60 p-5">
-          <h3 className="mb-3 font-bold text-brand-navy">My Tickets</h3>
+          <h3 className="mb-3 font-bold text-brand-navy">ตั๋วของฉัน</h3>
           <div className="flex items-center justify-between rounded-xl bg-white p-4">
             <div>
               <p className="text-3xl font-extrabold text-brand-navy">{total}</p>
-              <p className="text-xs text-slate-500">Total Tickets</p>
+              <p className="text-xs text-slate-500">การจองทั้งหมด</p>
             </div>
             <Link
               href="/tickets"
               className="flex items-center gap-1 rounded-lg border border-brand-pink px-3 py-2 text-sm text-brand-pink hover:bg-[#FCE7F1]"
             >
-              View Ticket History <IconArrowRight className="h-4 w-4" />
+              ดูประวัติการจอง <IconArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-3 text-center">
             <div className="rounded-xl bg-white p-3">
               <p className="text-2xl font-bold text-brand-navy">{upcomingTickets}</p>
-              <p className="text-xs text-slate-500">Upcoming</p>
+              <p className="text-xs text-slate-500">กำลังดำเนินการ</p>
             </div>
             <div className="rounded-xl bg-white p-3">
               <p className="text-2xl font-bold text-brand-navy">{completed}</p>
-              <p className="text-xs text-slate-500">Completed</p>
+              <p className="text-xs text-slate-500">สำเร็จแล้ว</p>
             </div>
             <div className="rounded-xl bg-white p-3">
               <p className="text-2xl font-bold text-brand-navy">{cancelled}</p>
-              <p className="text-xs text-slate-500">Cancelled</p>
+              <p className="text-xs text-slate-500">ยกเลิก</p>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default async function Dashboard() {
           href="/admin"
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
         >
-          ⚙️ จัดการคอนเสิร์ต (Admin)
+          ⚙️ จัดการคอนเสิร์ต (ผู้ดูแลระบบ)
         </Link>
       ) : null}
     </AppShell>
