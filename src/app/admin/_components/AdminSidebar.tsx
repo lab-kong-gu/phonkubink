@@ -6,13 +6,14 @@ import {
   IconDashboard,
   IconMusic,
   IconClipboard,
+  IconUpload,
   IconEye,
   IconLogout,
   IconMenu,
   IconClose,
 } from "../../_components/icons";
 
-type AdminNavKey = "overview" | "concerts" | "orders";
+type AdminNavKey = "overview" | "concerts" | "orders" | "banners";
 
 type Item = { key: AdminNavKey; href: string; label: string; Icon: (p: { className?: string }) => JSX.Element };
 
@@ -20,6 +21,7 @@ const NAV: Item[] = [
   { key: "overview", href: "/admin", label: "ภาพรวม", Icon: IconDashboard },
   { key: "concerts", href: "/admin/concerts", label: "จัดการคอนเสิร์ต", Icon: IconMusic },
   { key: "orders", href: "/admin/orders", label: "ออเดอร์", Icon: IconClipboard },
+  { key: "banners", href: "/admin/banners", label: "แบนเนอร์โปรโมชัน", Icon: IconUpload },
 ];
 
 export default function AdminSidebar({

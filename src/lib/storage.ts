@@ -7,6 +7,8 @@
 
 const POSTERS_BUCKET = "posters";
 const SLIPS_BUCKET = "slips";
+// "banners" (public) — promo banner images shown in the dashboard hero carousel.
+const BANNERS_BUCKET = "banners";
 
 function env() {
   const base = process.env.SUPABASE_URL;
@@ -63,6 +65,84 @@ export async function uploadPoster(file: File): Promise<string | null> {
   }
   console.log("Poster uploaded OK:", path);
   return `${base}/storage/v1/object/public/${POSTERS_BUCKET}/${path}`;
+}
+
+// ── Promo banners (public bucket, no DB table — the bucket listing IS the data) ──
+
+export type BannerFile = { path: string; url: string; createdAt: string };
+
+export async function uploadBanner(file: File): Promise<string | null> {
+  const e = env();
+  if (!e) {
+    console.error("Supabase storage env not set (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)");
+    return null;
+  }
+  const { base, key } = e;
+  await ensureBucket(base, key, BANNERS_BUCKET, true);
+
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const body = Buffer.from(await file.arrayBuffer());
+
+  const res = await fetch(`${base}/storage/v1/object/${BANNERS_BUCKET}/${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      apikey: key,
+      "Content-Type": file.type || "application/octet-stream",
+      "x-upsert": "true",
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    console.error("Banner upload failed:", res.status, await res.text());
+    return null;
+  }
+  return `${base}/storage/v1/object/public/${BANNERS_BUCKET}/${path}`;
+}
+
+// List all banner images, newest first (filenames start with a timestamp).
+export async function listBanners(): Promise<BannerFile[]> {
+  const e = env();
+  if (!e) return [];
+  const { base, key } = e;
+
+  const res = await fetch(`${base}/storage/v1/object/list/${BANNERS_BUCKET}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      apikey: key,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prefix: "", limit: 50, sortBy: { column: "name", order: "desc" } }),
+  }).catch((err) => {
+    console.error("listBanners fetch error:", err);
+    return null;
+  });
+
+  if (!res || !res.ok) return []; // bucket may not exist yet — that's fine
+  const items = (await res.json()) as { name: string; created_at?: string }[];
+  return items
+    .filter((i) => i.name && !i.name.startsWith("."))
+    .map((i) => ({
+      path: i.name,
+      url: `${base}/storage/v1/object/public/${BANNERS_BUCKET}/${i.name}`,
+      createdAt: i.created_at ?? "",
+    }));
+}
+
+export async function deleteBannerFile(path: string): Promise<boolean> {
+  const e = env();
+  if (!e) return false;
+  const { base, key } = e;
+
+  const res = await fetch(`${base}/storage/v1/object/${BANNERS_BUCKET}/${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${key}`, apikey: key },
+  });
+  if (!res.ok) console.error("Banner delete failed:", res.status, await res.text());
+  return res.ok;
 }
 
 // Upload a transfer slip image (already-downloaded bytes from LINE's Content

@@ -1,16 +1,18 @@
 import Link from "next/link";
 import AppShell from "../_components/AppShell";
+import HeroCarousel from "../_components/HeroCarousel";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { baht } from "@/lib/money";
 import { fmtDate, fmtTime, daysUntil } from "@/lib/format";
 import { IconSearch, IconPin, IconCalendar, IconArrowRight, IconChevronRight } from "../_components/icons";
+import { listBanners } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const user = await requireUser();
-  const [concerts, orders] = await Promise.all([
+  const [concerts, orders, banners] = await Promise.all([
     prisma.concert.findMany({
       where: { status: "PUBLISHED" },
       orderBy: { eventDate: "asc" },
@@ -18,6 +20,7 @@ export default async function Dashboard() {
       include: { tiers: { where: { isActive: true }, select: { price: true } } },
     }),
     prisma.order.findMany({ where: { lineUserId: user.lineUserId }, include: { concert: true } }),
+    listBanners(),
   ]);
 
   const popular = concerts.slice(0, 4);
@@ -29,18 +32,37 @@ export default async function Dashboard() {
 
   return (
     <AppShell active="dashboard">
-      {/* Hero */}
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-r from-brand-navy via-purple-700 to-brand-pink p-8 text-white">
-        <p className="text-lg">👋 ยินดีต้อนรับกลับมา</p>
-        <h1 className="text-4xl font-extrabold">{user.displayName ?? "เพื่อน"}!</h1>
-        <p className="mt-1 max-w-sm text-sm text-white/80">
-          เลือกคอนเสิร์ตที่อยากดู แล้วผ่อนสบาย ๆ กับเรา
-        </p>
-        <div className="mt-5 flex max-w-xl items-center gap-2 rounded-xl bg-white px-4 py-3 text-slate-500">
-          <IconSearch className="h-5 w-5" />
-          <span className="text-sm">ค้นหาคอนเสิร์ต ศิลปิน สถานที่…</span>
-        </div>
-      </section>
+      {/* Search bar (moved to top) */}
+      <Link
+        href="/concerts"
+        className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-500 shadow-sm hover:border-brand-pink/50"
+      >
+        <IconSearch className="h-5 w-5" />
+        <span className="text-sm">ค้นหาคอนเสิร์ต ศิลปิน สถานที่…</span>
+      </Link>
+
+      {/* Hero banner carousel */}
+      <HeroCarousel
+        slides={[
+          // แบนเนอร์โปรโมชันอิสระ (อัปโหลดที่ /admin/banners) มาก่อน
+          ...banners.map((b) => ({
+            id: b.path,
+            imageUrl: b.url,
+            title: "",
+          })),
+          // ตามด้วยโปสเตอร์คอนเสิร์ต
+          ...concerts
+            .filter((c) => c.posterUrl)
+            .slice(0, 5)
+            .map((c) => ({
+              id: c.id,
+              imageUrl: c.posterUrl,
+              title: c.name,
+              subtitle: `${c.venue ?? "—"} · ${fmtDate(c.eventDate)}`,
+              href: `/concerts/${c.id}`,
+            })),
+        ]}
+      />
 
       {/* Popular Concerts */}
       <section className="mt-8">
@@ -158,14 +180,6 @@ export default async function Dashboard() {
         </div>
       </section>
 
-      {user.role === "ADMIN" ? (
-        <Link
-          href="/admin"
-          className="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-        >
-          ⚙️ จัดการคอนเสิร์ต (ผู้ดูแลระบบ)
-        </Link>
-      ) : null}
     </AppShell>
   );
 }

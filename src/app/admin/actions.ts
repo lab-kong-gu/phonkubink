@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { uploadPoster } from "@/lib/storage";
+import { uploadPoster, uploadBanner, deleteBannerFile } from "@/lib/storage";
 
 type ConcertStatus = "DRAFT" | "PUBLISHED" | "SOLD_OUT" | "CANCELLED";
 
@@ -77,6 +77,25 @@ export async function updateConcert(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath(`/admin/concerts/${id}`);
   redirect("/admin");
+}
+
+// ── Promo banners (dashboard hero carousel) ──
+export async function addBanner(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("image");
+  if (file instanceof File && file.size > 0) {
+    await uploadBanner(file);
+  }
+  revalidatePath("/admin/banners");
+  revalidatePath("/dashboard");
+}
+
+export async function removeBanner(formData: FormData) {
+  await requireAdmin();
+  const path = (formData.get("path") ?? "").toString();
+  if (path) await deleteBannerFile(path);
+  revalidatePath("/admin/banners");
+  revalidatePath("/dashboard");
 }
 
 // ── Tiers (seat zones) ──
